@@ -1,0 +1,595 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CHAOSCRAFT</title><style>
+:root{--bg:#10131a;--fg:#eef1f8;--ac:#ffb454;--pn:#0b0e14ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131a;--fg:#eef1f8;--pn:#0b0e14ee}}
+:root[data-theme=dark]{--bg:#10131a;--fg:#eef1f8;--pn:#0b0e14ee}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif;overflow:hidden;user-select:none}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
+.ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000b;z-index:5}
+.pn{background:var(--pn);border:1px solid #fff3;border-radius:10px;padding:16px 20px;max-width:580px;max-height:86vh;overflow:auto}
+h1{margin:0;letter-spacing:.15em;color:var(--ac)}h3{margin:10px 0 4px}p{margin:4px 0}
+button,input,select{font:inherit;color:inherit;background:#232b3d;border:1px solid #fff3;border-radius:6px;padding:6px 10px;margin:3px;cursor:pointer}
+button:hover{border-color:var(--ac)}.hide{display:none!important}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:2}
+#xh{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;background:linear-gradient(#fff,#fff) center/2px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2px no-repeat;mix-blend-mode:difference}
+#bars{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);display:flex;gap:16px}
+.bar{width:150px;height:12px;border:1px solid #fff7;background:#0008}.bar i{display:block;height:100%}
+#hb{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex}
+#nm{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);text-shadow:0 1px 3px #000}
+#msg{position:absolute;left:50%;top:12%;transform:translateX(-50%);text-align:center;font-size:17px;text-shadow:0 1px 4px #000;width:80%}
+#info{position:absolute;left:8px;top:8px;font:12px monospace;text-shadow:0 1px 2px #000}
+#boss{position:absolute;left:25%;right:25%;top:34px;height:14px;border:1px solid #fff;background:#0008}#boss:before{content:attr(data-label);position:absolute;top:-19px;left:0;font-weight:700;letter-spacing:.18em}#boss i{display:block;height:100%;background:#b8a0f0}
+#dm{position:absolute;inset:0;background:radial-gradient(transparent 40%,#d00);opacity:0;transition:opacity .3s}
+.s{width:42px;height:42px;border:2px solid #fff4;border-radius:6px;position:relative;display:inline-block;margin:2px;background:#0007;box-sizing:border-box;vertical-align:middle}.s.on{border-color:var(--ac)}.s i{position:absolute;inset:7px;background:var(--c);border-radius:3px}.s b{position:absolute;right:3px;bottom:0;font-size:12px;text-shadow:0 0 3px #000}
+#gm{position:absolute;right:12px;top:8px;font:700 15px system-ui;color:#7ff0ff;text-shadow:0 1px 3px #000}
+#sp{position:absolute;left:50%;bottom:132px;transform:translateX(-50%);width:min(680px,86%);background:#000c;border:1px solid #fff3;border-radius:8px;padding:8px 12px;text-shadow:0 1px 3px #000}#sp b{display:block;letter-spacing:.18em;font-size:12px}#sp span{font-size:15px}
+#di{position:absolute;left:50%;top:50%;width:0;height:0;opacity:0;transition:opacity .5s}#di:after{content:'';position:absolute;left:-14px;top:-140px;border:14px solid transparent;border-top:0;border-bottom:26px solid #e33;filter:drop-shadow(0 0 6px #f00)}
+#cf{z-index:9}#ldg{z-index:7;background:#000e}#shp,#dth{z-index:6}#dth{background:#2a0000dd}
+.pb{width:100%;height:14px;border:1px solid #fff7;background:#0008;margin:8px 0}.pb i{display:block;height:100%;background:var(--ac)}button:disabled{opacity:.45;cursor:not-allowed}
+.armor-panel{margin-top:12px;padding:10px;border:1px solid #ffffff25;border-radius:8px;background:#0003}.armor-panel h3{margin:0 0 4px}.armor-panel p{font-size:12px;opacity:.85}.armor-grid{display:flex;flex-wrap:wrap;gap:10px}.armor-slot{display:flex;flex-direction:column;align-items:center;min-width:52px}.armor-slot small{font-size:11px;opacity:.85;margin-bottom:2px}.armor-slot .s{cursor:pointer}.muted-quest{opacity:.65}.armor-summary{font-size:12px;color:#b9f7d9;margin-top:6px}</style></head><body>
+<div id="hud" class="hide"><div id="dm"></div><div id="xh"></div><div id="boss" class="hide" data-label="HAROLD"><i></i></div><div id="msg"></div><div id="gm"></div><div id="sp" class="hide"></div><div id="di"></div><div id="info"></div><div id="nm"></div><div id="bars"><div class="bar"><i id="hp" style="background:#e04a4a"></i></div><div class="bar"><i id="hg" style="background:#e8a33a"></i></div></div><div id="hb"></div></div>
+<div id="menu" class="ov"><div class="pn"><h1>CHAOSCRAFT</h1><p>Everything is random. Nothing works the way you expect.</p>
+<input id="wn" placeholder="World name" value="World 1"><input id="sdv" placeholder="Seed (blank = random)"><br>
+<select id="dfs"><option value=".6">Easy<option value="1" selected>Normal<option value="1.6">Hard</select>
+<select id="ris"><option value=".3">Mild chaos<option value=".55" selected>Wild<option value=".85">Total chaos</select>
+<button id="go">Generate world</button><h3>Saved worlds</h3><div id="sv"></div>
+<p><small>WASD move · Space jump · Shift sprint · LMB mine/attack/shoot · RMB place/use · Tab drop selected stack · 1-9/wheel hotbar · E inventory/craft · F sleep/interact/trade · G summon merchant · J journal &amp; quests · P pause · mouse moves camera</small></p></div></div>
+<div id="pause" class="ov hide"><div class="pn"><h2>Paused</h2><button id="rsm">Resume</button><button id="sv2">Save</button><button id="qt">Save &amp; quit</button><p>Render distance <select id="rd"><option>3<option selected>5<option>7</select></p><p>Graphics <select id="gq"><option>Low<option selected>Medium<option>High<option>Ultra</select> · Screen shake <select id="shk"><option value="0">Off<option value="0.4">Reduced<option value="1" selected>Full</select> · <label><input type="checkbox" id="vgn" checked style="margin:0 4px"> Damage vignette</label></p></div></div>
+<div id="invp" class="ov hide"><div class="pn"><div id="iv"></div><div id="cr"></div><small id="ct"></small><p><button id="clr" style="border-color:#e04a4a;color:#ff9b9b">CLEAR INVENTORY</button></p></div></div>
+<div id="jrn" class="ov hide"><div class="pn" id="jb"></div></div>
+<div id="end" class="ov hide"><div class="pn" id="eb"></div></div>
+<div id="shp" class="ov hide"><div class="pn" id="shb"></div></div>
+<div id="dth" class="ov hide"><div class="pn" id="dtb"></div></div>
+<div id="ldg" class="ov hide"><div class="pn" style="width:min(440px,86vw)"><h2>Preparing your world…</h2><div class="pb"><i id="ldb" style="width:0"></i></div><p><b id="ldp">0%</b> · <span id="ldk"></span></p><p><small id="ldh"></small></p><button id="lde" disabled>ENTER WORLD</button></div></div>
+<div id="cf" class="ov hide"><div class="pn"><h2 id="cft"></h2><p id="cfp"></p><button id="cfc">CANCEL</button><button id="cfo" style="border-color:#e04a4a;color:#ff9b9b"></button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>
+'use strict';
+const $=s=>document.querySelector(s),V3=THREE.Vector3,cl=(x,a,b)=>Math.max(a,Math.min(b,x)),CS=16,CH=48,SEA=15;
+const rng=a=>()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const sd=x=>/^-?\d+$/.test(x)?+x|0:[...x].reduce((h,c)=>Math.imul(h^c.charCodeAt(0),16777619),2166136261)|0;
+const hash=(x,y,z,s)=>{let h=Math.imul(x|0,374761393)^Math.imul(y|0,668265263)^Math.imul(z|0,2147483629)^Math.imul(s|0,1274126177);h=Math.imul(h^h>>>13,1274126177);h=Math.imul(h^h>>>15,2246822519);return((h^h>>>13)>>>0)/4294967296};
+let S=0,W=null,dim=0,ui='menu',ch=new Map(),ents=[],inv=[],sel=0,cgs=[],cur=null,mods={},rec={},obs={},kills=0,mined=0,won=0,laxWon=0,tod=.3,wname='',dif=1,RD=5,msgT=0,tg=null,mn=null,cd=0,cd2=0,sw=0,as=0,flash=0,ret=null,dl=1,nolock=0,everLocked=0,fc=0,fps=60,spT=3,eid=0,AC,portals=[],bedObjs=[],dropObjs=[],shots=[];
+const n2=(x,z,s)=>{const i=Math.floor(x),j=Math.floor(z),u=x-i,v=z-j,a=u*u*(3-2*u),b=v*v*(3-2*v),p=hash(i,0,j,s),q=hash(i+1,0,j,s),r=hash(i,0,j+1,s),t=hash(i+1,0,j+1,s);return p+(q-p)*a+(r-p)*b+(p-q-r+t)*a*b};
+const fbm=(x,z)=>n2(x/48,z/48,S)*.6+n2(x/20,z/20,S+1)*.28+n2(x/8,z/8,S+2)*.12;
+const h0=(x,z)=>Math.min(CH-2,Math.floor(22+(fbm(x,z)-.5)*52));
+const isl=(x,z)=>{const n=n2(x/34,z/34,S+21);if(n<=.52)return null;const t=Math.floor(28+n2(x/11,z/11,S+22)*10);return[t,t-Math.floor(2+(n-.52)*100)]};
+const island=()=>{let b=[0,0],m=0;for(let x=-150;x<=150;x+=6)for(let z=-150;z<=150;z+=6){const n=n2(x/34,z/34,S+21);if(n>m){m=n;b=[x,z]}}return b};
+const BL=[0,['Grass',0x5a9e3a,.6],['Dirt',0x7a5230,.5],['Stone',0x7d8088,1.5],['Sand',0xd8c88a,.5],['Log',0x6b4a2a,1],['Leaves',0x2f7d32,.2],['Snow',0xf2f6ff,.3],['Water',0x2a5fd8,0],['Glimmer',0x6ff2e0,2],['Plank',0xb98a4e,.8],['Ruby Crystal',0xe84d67,1.6],['Voidglass',0x6f5cff,2.2],['Sun Amber',0xffbd42,1.2],['Glow Moss',0x55e6a5,.4]];
+const COL=BL.map(b=>b&&[(b[1]>>16)/255,(b[1]>>8&255)/255,(b[1]&255)/255]);
+const F=[[1,0,0,.8,[[1,0,0],[1,1,0],[1,1,1],[1,0,1]]],[-1,0,0,.8,[[0,0,1],[0,1,1],[0,1,0],[0,0,0]]],[0,1,0,1,[[0,1,1],[1,1,1],[1,1,0],[0,1,0]]],[0,-1,0,.5,[[0,0,0],[1,0,0],[1,0,1],[0,0,1]]],[0,0,1,.7,[[1,0,1],[1,1,1],[0,1,1],[0,0,1]]],[0,0,-1,.7,[[0,0,0],[0,1,0],[1,1,0],[1,0,0]]]];
+const AD=['Unreasonably Heavy','Apologetic','Pocket','Borrowed','Inverted','Smug','Hungry','Forgotten','Polite','Leaky'],NN=['Spoon','Thunderstorm','Axe','Compass','Heart','Pebble','Feather','Gear','Umbrella','Lantern'];
+const FXD={heal:'restores health',food:'is edible',jump:'grants a mighty leap',float:'makes you nearly weightless',speed:'quickens your legs',boom:'explodes where you aim',smite:'calls lightning on nearby creatures',launch:'hurls you skyward',key:'opens a portal',bane:'does nothing when used'},FXB={tp:'teleports you',spawn:'wakes something up',regen:'regrows after a while'};
+const EXTRA_PREFIX=['Unreasonably Heavy','Upside-Down','Caffeinated','Royal','Forgotten','Radioactive','Wet','Suspicious','Ancient','Neon','Rubber','Haunted','Cosmic','Borrowed','Polite','Angry'];
+const EXTRA_NOUNS=['Spoon','Boomerang','Accordion','Wand','Bow','Slingshot','Bed','Lantern','Boot','Mushroom'];
+const EXTRA_NAMES=EXTRA_PREFIX.flatMap(a=>EXTRA_NOUNS.map(b=>a+' '+b));
+const EXTRA_KINDS=['ranged','ammo','melee','bed','heal','food','boom','speed','jump','shield','summon','teleport','freeze','gravity','light','bow','spear','bomb','web','lure'];
+const SP={guest:{s:[.7,2.4,.7],c:0xd9d6e6,c2:0xf2efff,hp:20,sp:3.6,dm:3,n:'Hollow Guest'},mite:{s:[.5,.45,.7],c:0xc48a2c,c2:0x8a5a1a,hp:6,sp:5.2,dm:1,n:'Clockwork Mite'},grazer:{s:[.9,.8,1.3],c:0x9fb86a,c2:0xc9d98f,hp:10,sp:1.4,dm:0,n:'Moss Grazer'},riftling:{s:[.8,1.8,.8],c:0x6b5bff,c2:0xb6aaff,hp:24,sp:4.3,dm:4,n:'Riftling'},bloombeast:{s:[1.6,2.1,1.6],c:0x36b878,c2:0xa2ffd0,hp:42,sp:2.2,dm:6,n:'Bloombeast'},prism:{s:[1.1,2.4,1.1],c:0xffc64b,c2:0xfff0a1,hp:32,sp:3.1,dm:5,n:'Prism Stalker'},H:{s:[2.6,5.2,1.8],c:0xe9e1d3,c2:0xfffaf0,hp:260,sp:2.6,dm:8,n:'Harold'},L:{s:[2.6,3.4,2.4],c:0xff55a7,c2:0xffc1e0,hp:390,sp:1.8,dm:0,n:'Laxative Dude'}};
+// ---- per-world rules (everything derives from the seed)
+function mkWorld(seed,ri){const r=rng(seed),pk=a=>a[r()*a.length|0],sh=a=>{a=a.slice();for(let i=a.length;i>1;){const j=r()*i--|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+ const g=pk([['low',11,3.4],['normal',28,1.3],['normal',28,1.3],['heavy',44,1.15]]),f=pk([['slippery',2],['normal',14],['grippy',30]]),ef=sh(['heal','food','jump','float','speed','boom','smite','launch','key','bane']),ad=sh(AD),nn=sh(NN),dm=()=>r()<.12?8+(r()*10|0):1+(r()*4|0),IT=[0];
+BL.forEach((b,i)=>i&&IT.push({n:b[0],c:b[1],blk:i!==8,d:dm(),kind:i===8?'water':'block'}));IT[8].d=0;
+ ef.forEach((e,i)=>IT.push({n:ad[i]+' '+nn[i],c:(80+r()*175|0)<<16|(80+r()*175|0)<<8|(80+r()*175|0),fx:e,d:dm(),blk:false}));
+ const extra=sh(EXTRA_NAMES).slice(0,128),kinds=sh(EXTRA_KINDS);
+ extra.forEach((n,i)=>IT.push({n,c:(55+r()*200|0)<<16|(55+r()*200|0)<<8|(55+r()*200|0),d:1+(r()*17|0),blk:false,kind:kinds[i%kinds.length],fx:0}));
+ const laxKey=IT.length;IT.push({n:'Laxative Sigil',c:0xff5ca8,d:24,blk:false,kind:'laxsigil',fx:0});
+ const ok=IT.map((_,i)=>i).filter(i=>i&&i!==8&&i!==laxKey),id=e=>BL.length+ef.indexOf(e),dp={},hm={},fx={};IT[id('bane')].d=40;
+ ok.filter(i=>i<BL.length).forEach(b=>{dp[b]=[r()<1-ri?b:pk(ok),1+(r()*2|0)];hm[b]=.5+r()*1.3;fx[b]=r()<.3?pk(['tp','spawn','regen']):0});
+ dp[pk([1,2,4,6])]=[id('food'),2];
+ const bs=sh([1,2,3,4,5,6]),pr=(a,b)=>[a,b].sort((x,y)=>x-y).join(',');
+ return{seed,ri,g:g[1],gn:g[0],jh:g[2],fr:f[1],fn:f[0],IT,ok,dp,hm,fx,key:id('key'),bane:id('bane'),laxKey,bedId:IT.findIndex(i=>i.kind==='bed'),rangedId:IT.findIndex(i=>i.kind==='ranged'||i.kind==='bow'),ammoId:IT.findIndex(i=>i.kind==='ammo'),kk:pr(bs[0],bs[1]),kb:pr(bs[2],bs[3]),hs:{a:bs.slice(0,2),b:bs.slice(2,4)},loot:{guest:pk(ok),mite:pk(ok),grazer:id('food'),riftling:pk(ok),bloombeast:pk(ok),prism:pk(ok),H:9,L:laxKey}}}
+function rcp(ids){ids=ids.filter(Boolean).sort((a,b)=>a-b);if(!ids.length)return null;const k=ids.join(',');if(k===W.kk)return[W.key,1,k];if(k===W.kb)return[W.bane,1,k];const x=rng(sd(k+':'+S));return[W.ok[x()*W.ok.length|0],1+(x()*3|0),k]}
+function summ(){const I=W.IT,L=[`Gravity is ${W.gn}. The ground feels ${W.fn}.`,`${Object.keys(W.dp).filter(b=>W.dp[b][0]!=b).length} materials give back something other than themselves.`,`Item catalogue: ${I.length-1} possible items, including randomized ranged weapons and utility objects.`],f=Object.keys(W.fx).find(b=>W.fx[b]),s=I.slice(1).filter(i=>(i.blk||i.fx||i.kind)&&i.fx!=='bane'&&i.d>=8).sort((a,b)=>b.d-a.d)[0];
+ if(f)L.push(`Mining ${I[f].n} ${FXB[W.fx[f]]}.`);if(s)L.push(`The ${s.n} hits far harder than it should.`);L.push('A door to the Shattered Reach exists. So does Harold.');return L}
+// ---- renderer
+const R=new THREE.WebGLRenderer({antialias:true}),sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(75,1,.1,400);
+R.setPixelRatio(Math.min(devicePixelRatio,1.5));document.body.prepend(R.domElement);cam.rotation.order='YXZ';sc.background=new THREE.Color();sc.fog=new THREE.Fog(0,10,80);
+const am=new THREE.AmbientLight(0xffffff,.9),su=new THREE.DirectionalLight(0xffffff,.6),mO=new THREE.MeshBasicMaterial({vertexColors:true}),mW=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.6,depthWrite:false});
+su.position.set(.4,1,.3);sc.add(am,su,cam);
+const hl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01,1.01,1.01)),new THREE.LineBasicMaterial({color:0})),crk=new THREE.Mesh(new THREE.BoxGeometry(1.02,1.02,1.02),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:0,depthWrite:false})),hand=new THREE.Mesh(new THREE.BoxGeometry(.18,.18,.5),new THREE.MeshLambertMaterial({color:0xd8a77a}));
+hand.position.set(.32,-.28,-.5);cam.add(hand);sc.add(hl,crk);
+const pool=[],pg=new THREE.BoxGeometry(.12,.12,.12);for(let i=0;i<50;i++){const m=new THREE.Mesh(pg,new THREE.MeshBasicMaterial());m.visible=false;sc.add(m);pool.push({m,v:new V3,l:0})}
+function puff(x,y,z,c){let n=0;for(const q of pool){if(q.l>0)continue;q.l=.7;q.m.visible=true;q.m.material.color.setHex(c);q.m.position.set(x,y,z);q.v.set((Math.random()-.5)*5,Math.random()*4+1,(Math.random()-.5)*5);if(++n>=10)break}}
+function snd(f,d,t='square',v=.06){try{AC=AC||new AudioContext();const o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime;o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(g);g.connect(AC.destination);o.start(n);o.stop(n+d)}catch(e){}}
+function gurgle(){snd(115,.19,'sawtooth',.11);setTimeout(()=>snd(76,.23,'square',.08),95);setTimeout(()=>snd(92,.18,'sawtooth',.07),180)}
+function clearProps(){for(const a of [portals,bedObjs,dropObjs,shots])for(const o of a){sc.remove(o.g||o.m);if(o.g)o.g.traverse(q=>{if(q.geometry)q.geometry.dispose();if(q.material&&!Array.isArray(q.material))q.material.dispose()});else if(o.m){o.m.geometry.dispose();o.m.material.dispose()}}portals=[];bedObjs=[];dropObjs=[];shots=[]}
+function spawnPortal(target){if(dim)target='return';const dir=new V3(-Math.sin(P.yaw),0,-Math.cos(P.yaw)),x=Math.floor(P.p.x+dir.x*3.5),z=Math.floor(P.p.z+dir.z*3.5),y=topY(x,z);if(y<1){notify('The portal needs solid ground beneath it.');return}const g=new THREE.Group(),ring=new THREE.Mesh(new THREE.TorusGeometry(.9,.13,10,28),new THREE.MeshBasicMaterial({color:target==='laxative'?0xff5ca8:target==='return'?0x91f8ff:0xa98aff,emissive:0x291b4a})),core=new THREE.Mesh(new THREE.PlaneGeometry(1.55,2.2),new THREE.MeshBasicMaterial({color:target==='laxative'?0xff8cc5:target==='return'?0x76eaff:0x7f56ff,transparent:true,opacity:.62,side:THREE.DoubleSide,depthWrite:false}));ring.position.y=1.28;core.position.set(0,1.28,-.035);g.add(core,ring);g.position.set(x+.5,y,z+.5);g.rotation.y=P.yaw;sc.add(g);portals.push({g,ring,core,p:new V3(x+.5,y,z+.5),target,world:dim,age:0});snd(280,.35,'sine',.1);notify(target==='harold'?'A violet portal opens. Harold is waiting beyond it.':target==='laxative'?'A violently pink portal bubbles into existence.':'A return portal opens. Walk through it.')}
+function placeBed(x,y,z){const g=new THREE.Group(),wood=new THREE.MeshLambertMaterial({color:0x80512e}),blanket=new THREE.MeshLambertMaterial({color:0x4c9edb}),pillow=new THREE.MeshLambertMaterial({color:0xdfe9ff});const part=(geo,mat,px,py,pz)=>{const m=new THREE.Mesh(geo,mat);m.position.set(px,py,pz);g.add(m)};for(const dx of [.12,.88])for(const dz of [.12,.88])part(new THREE.BoxGeometry(.12,.36,.12),wood,dx,.18,dz);part(new THREE.BoxGeometry(.95,.22,.95),blanket,.5,.45,.5);part(new THREE.BoxGeometry(.28,.1,.68),pillow,.27,.61,.5);g.position.set(x,y,z);sc.add(g);bedObjs.push({g,p:new V3(x+.5,y,z+.5)});notify('Bed placed. Stand beside it and press F to sleep.')}
+function dropStack(){const st=inv[sel];if(!st)return;const dir=new V3(0,0,-1).applyQuaternion(cam.quaternion),m=new THREE.Mesh(new THREE.BoxGeometry(.28,.28,.28),new THREE.MeshLambertMaterial({color:W.IT[st.id].c}));m.position.copy(cam.position).addScaledVector(dir,.9);sc.add(m);dropObjs.push({m,id:st.id,n:st.n,p:m.position,v:dir.multiplyScalar(3).add(new V3(0,1.5,0)),life:90});inv[sel]=null;renderHB();notify('Dropped '+W.IT[st.id].n+' ×'+st.n+' · walk over it to pick it up.')}
+function shootProjectile(pos,vel,color,damage,owner,life=4){const m=new THREE.Mesh(new THREE.SphereGeometry(owner==='enemy'?.23:.13,8,7),new THREE.MeshBasicMaterial({color,emissive:color}));m.position.copy(pos);sc.add(m);shots.push({m,p:m.position,v:vel.clone(),damage,owner,life})}
+function firePlayer(it){const d=new V3(0,0,-1).applyQuaternion(cam.quaternion),start=cam.position.clone().addScaledVector(d,.65);shootProjectile(start,d.multiplyScalar(it.kind==='spear'?22:it.kind==='ammo'?13:25),it.c,it.d,'player',it.kind==='ammo'?2.6:4);snd(it.kind==='bow'?420:it.kind==='spear'?185:330,.07,'triangle',.045);if(it.kind==='ammo')dec(sel)}
+function updateProps(dt){for(const p of portals){p.age+=dt;p.g.visible=p.world===dim&&!p.used;p.ring.rotation.z=Math.sin(p.age*1.7)*.16;p.core.material.opacity=.4+Math.sin(p.age*4)*.16;if(!p.used&&p.world===dim&&Math.hypot(P.p.x-p.p.x,P.p.z-p.p.z)<1.25&&Math.abs(P.p.y-p.p.y)<2){p.used=true;if(p.target==='harold'){ret=P.p.toArray();warp(1);notify('You crossed the portal. Harold stirs in the Shattered Reach.')}else if(p.target==='laxative'){ret=P.p.toArray();warp(2);notify('A wet gurgle echoes through the arena.')}else{warp(0);notify('Back in the Overworld. Things feel different now.')}return}}for(const b of bedObjs)if(dim===0&&Math.hypot(P.p.x-b.p.x,P.p.z-b.p.z)<1.65&&Math.abs(P.p.y-b.p.y)<2&&K.KeyF){tod=.28;P.hp=20;P.hg=20;notify('You sleep through the chaos. Health restored; morning arrives.');K.KeyF=0;snd(520,.2,'sine')}for(let i=dropObjs.length-1;i>=0;i--){const d=dropObjs[i];d.life-=dt;d.v.y-=12*dt;d.p.addScaledVector(d.v,dt);if(d.life<=0||d.p.y<-20){sc.remove(d.m);d.m.geometry.dispose();d.m.material.dispose();dropObjs.splice(i,1);continue}if(Math.hypot(P.p.x-d.p.x,P.p.z-d.p.z)<1.15&&Math.abs(P.p.y-d.p.y)<2){addItem(d.id,d.n);sc.remove(d.m);d.m.geometry.dispose();d.m.material.dispose();dropObjs.splice(i,1);snd(600,.05,'triangle')}}for(let i=shots.length-1;i>=0;i--){const q=shots[i];q.life-=dt;q.p.addScaledVector(q.v,dt);q.v.y-=1.4*dt;q.m.position.copy(q.p);let hit=false;const block=gb(Math.floor(q.p.x),Math.floor(q.p.y),Math.floor(q.p.z));if(block>0&&block!==8)hit=true;if(q.owner==='player'){for(const e of ents){if(e.dead)continue;let target=e.p.clone().add(new V3(0,e.h*.5,0)),rad=Math.max(e.w,e.h*.35)+.2;if(e.t==='L'){if(!e.headOut)continue;target=e.p.clone().add(new V3(0,e.head.position.y,0));rad=.7}if(q.p.distanceTo(target)<rad){if(e.t!=='L'||e.headOut){if(e.t==='H'&&e.pz===4){notify("Harold's final defense blocks projectiles. Use Harold's Sealbreaker in melee.");}else{e.hp-=q.damage;e.fl=.18;if(e.hp<=0)ke(e);puff(q.p.x,q.p.y,q.p.z,q.m.material.color.getHex())}}hit=true;break}}}else if(q.p.distanceTo(cam.position)<.75){hurtP(q.damage);hit=true}if(hit||q.life<=0){sc.remove(q.m);q.m.geometry.dispose();q.m.material.dispose();shots.splice(i,1)}}}
+// ---- voxel world
+const ck=(x,z)=>(x+4096)*8192+z+4096,gb=(x,y,z)=>{if(y<0)return 3;if(y>=CH)return 0;const c=ch.get(ck(x>>4,z>>4));return c?c.d[(y*CS+(z&15))*CS+(x&15)]:-1};
+const topY=(x,z)=>{for(let y=CH-1;y>=0;y--){const b=gb(x,y,z);if(b<0)return-1;if(b>0&&b!==8)return y+1}return-1};
+function gen(cx,cz){const d=new Uint8Array(CS*CS*CH),ox=cx*CS,oz=cz*CS,hs=[];
+ for(let lz=0;lz<CS;lz++)for(let lx=0;lx<CS;lx++){const x=ox+lx,z=oz+lz;
+  if(dim){const q=isl(x,z);if(q)for(let y=Math.max(q[1],1);y<=q[0];y++)d[(y*CS+lz)*CS+lx]=y===q[0]?(hash(x,y,z,S)<.2?9:7):hash(x,y,z,S+4)<.04?9:3;continue}
+  const h=h0(x,z),t=h<=SEA+1?4:h>34?7:n2(x/90,z/90,S+7)>.64?4:1;hs[lz*CS+lx]=t===1&&h>SEA?h:-1;
+  for(let y=0;y<=Math.max(h,SEA);y++){let b=y>h?8:y===h?t:y>h-4?(t===4?4:2):3;
+   if(y>2&&y<h-2&&Math.abs(n2(x/10+y/6.7,z/10-y/5.3,S+11)-.5)<.05&&Math.abs(n2(x/12-y/4.1,z/12+y/6.1,S+13)-.5)<.07)b=0;else if(b===3&&hash(x,y,z,S+5)<.02)b=9;
+   d[(y*CS+lz)*CS+lx]=b}}
+ for(let lz=2;lz<14;lz++)for(let lx=2;lx<14;lx++){const h=hs[lz*CS+lx];if(h>0&&hash(ox+lx,1,oz+lz,S+3)<.012){const th=4+(hash(ox+lx,2,oz+lz,S+3)*2|0);
+  for(let i=1;i<=th;i++)d[((h+i)*CS+lz)*CS+lx]=5;
+  for(let dy=th-2;dy<=th+1;dy++)for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(Math.abs(dx)+Math.abs(dz)+(dy>th-1?1:0)<=3){const i=((h+dy)*CS+lz+dz)*CS+lx+dx;if(!d[i])d[i]=6}}}
+  if(won&&!dim){for(let lz=1;lz<15;lz++)for(let lx=1;lx<15;lx++){const x=ox+lx,z=oz+lz;if(hash(x,0,z,S+771)<.022){for(let y=CH-2;y>SEA;y--)if(d[(y*CS+lz)*CS+lx]&&d[(y*CS+lz)*CS+lx]!==8){d[(y*CS+lz)*CS+lx]=11+(hash(x,3,z,S+773)*4|0);break}}}}
+  const m=mods[dim+':'+cx+','+cz];if(m)for(const k in m)d[k]=m[k];return{x:cx,z:cz,d,m:null,w:null,dirty:1}}
+function free(c){for(const k of['m','w'])if(c[k]){sc.remove(c[k]);c[k].geometry.dispose();c[k]=null}}
+function bm(L,mat){if(!L[2].length)return null;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(L[0],3));g.setAttribute('color',new THREE.Float32BufferAttribute(L[1],3));g.setIndex(L[2]);g.computeBoundingSphere();const m=new THREE.Mesh(g,mat);sc.add(m);return m}
+function mk(c){free(c);const ox=c.x*CS,oz=c.z*CS,A=[[],[],[]],Wt=[[],[],[]];
+ for(let y=0;y<CH;y++)for(let z=0;z<CS;z++)for(let x=0;x<CS;x++){const b=c.d[(y*CS+z)*CS+x];if(!b)continue;const L=b===8?Wt:A;
+  for(let f=0;f<6;f++){const q=F[f],nx=x+q[0],ny=y+q[1],nz=z+q[2];let nb;
+   if(ny<0)nb=3;else if(ny>=CH)nb=0;else if(nx>=0&&nx<CS&&nz>=0&&nz<CS)nb=c.d[(ny*CS+nz)*CS+nx];else nb=gb(ox+nx,ny,oz+nz);
+   if(nb<0||(b===8?nb:nb&&nb!==8))continue;
+   const col=COL[b===1&&f!==2?2:b],j=q[3]*(.88+hash(ox+x,y,oz+z,7)*.24),k=L[0].length/3;
+   for(const v of q[4]){L[0].push(ox+x+v[0],y+v[1],oz+z+v[2]);L[1].push(col[0]*j,col[1]*j,col[2]*j)}
+   L[2].push(k,k+1,k+2,k,k+2,k+3)}}
+ c.m=bm(A,mO);c.w=bm(Wt,mW);c.dirty=0}
+function sb(x,y,z,b,rc=1,nm=0){if(y<0||y>=CH)return;const cx=x>>4,cz=z>>4,c=ch.get(ck(cx,cz));if(!c)return;const lx=x&15,lz=z&15,i=(y*CS+lz)*CS+lx;c.d[i]=b;
+ if(rc){const k=dim+':'+cx+','+cz;(mods[k]=mods[k]||{})[i]=b}
+ if(nm)c.dirty=1;else mk(c);
+ for(const[a,e,f]of[[lx===0,-1,0],[lx===15,1,0],[lz===0,0,-1],[lz===15,0,1]])if(a){const o=ch.get(ck(cx+e,cz+f));if(o)o.dirty=1}}
+function stream(rd,lim,ml){const pcx=Math.floor(P.p.x/CS),pcz=Math.floor(P.p.z/CS),need=[];
+ for(const[k,c]of ch)if(Math.abs(c.x-pcx)>rd+1||Math.abs(c.z-pcz)>rd+1){free(c);ch.delete(k)}
+ for(let dx=-rd;dx<=rd;dx++)for(let dz=-rd;dz<=rd;dz++)if(!ch.has(ck(pcx+dx,pcz+dz)))need.push([dx*dx+dz*dz,pcx+dx,pcz+dz]);
+ need.sort((a,b)=>a[0]-b[0]);let n=0;
+ for(const[,x,z]of need){if(n++>=lim)break;ch.set(ck(x,z),gen(x,z));for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const o=ch.get(ck(x+a,z+b));if(o)o.dirty=1}}
+ let m=0;for(const c of ch.values())if(c.dirty&&m<ml){mk(c);m++}}
+function unload(){for(const c of ch.values())free(c);ch.clear();for(const e of ents)rmE(e);ents=[]}
+// ---- physics (shared by player and creatures)
+const sol=(x,y,z)=>{const b=gb(x,y,z);return b<0||b>0&&b!==8};
+function hitB(x,y,z,w,h){for(let a=Math.floor(x-w);a<=Math.floor(x+w-.001);a++)for(let b=Math.floor(y);b<=Math.floor(y+h-.001);b++)for(let c=Math.floor(z-w);c<=Math.floor(z+w-.001);c++)if(sol(a,b,c))return 1;return 0}
+function step(o,dt){o.gnd=0;const n=Math.ceil(Math.max(Math.abs(o.v.x),Math.abs(o.v.y),Math.abs(o.v.z))*dt/.35)||1,d=dt/n;
+ for(let i=0;i<n;i++)for(const a of['x','y','z']){const old=o.p[a];o.p[a]+=o.v[a]*d;if(hitB(o.p.x,o.p.y,o.p.z,o.w,o.h)){o.p[a]=old;if(a==='y'&&o.v.y<0)o.gnd=1;o.v[a]=0}}}
+function ray(){const o=cam.position,d=new V3(0,0,-1).applyQuaternion(cam.quaternion);let x=Math.floor(o.x),y=Math.floor(o.y),z=Math.floor(o.z);
+ const sx=Math.sign(d.x),sy=Math.sign(d.y),sz=Math.sign(d.z),dx=Math.abs(1/d.x),dy=Math.abs(1/d.y),dz=Math.abs(1/d.z);
+ let tx=(sx>0?x+1-o.x:o.x-x)*dx,ty=(sy>0?y+1-o.y:o.y-y)*dy,tz=(sz>0?z+1-o.z:o.z-z)*dz,nx=0,ny=0,nz=0,t=0;
+ while(t<=6){const b=gb(x,y,z);if(b>0&&b!==8)return{x,y,z,nx,ny,nz,b};
+  if(tx<ty&&tx<tz){x+=sx;t=tx;tx+=dx;nx=-sx;ny=nz=0}else if(ty<tz){y+=sy;t=ty;ty+=dy;ny=-sy;nx=nz=0}else{z+=sz;t=tz;tz+=dz;nz=-sz;nx=ny=0}}return null}
+function boom(x,y,z,r,skip){const R2=Math.ceil(r);for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++)for(let k=-R2;k<=R2;k++){const d=Math.hypot(i,j,k),X=Math.floor(x)+i,Y=Math.floor(y)+j,Z=Math.floor(z)+k;if(d<=r){const b=gb(X,Y,Z);if(b>0&&b!==8&&BL[b][2]*W.hm[b]<(r-d)*1.3+.4)sb(X,Y,Z,0,1,1)}}
+ puff(x,y,z,0xffaa33);snd(45,.4,'sawtooth',.2);
+ for(const o of[...ents,P]){if(o===skip)continue;const dx=o.p.x-x,dy=o.p.y+1-y,dz=o.p.z-z,d=Math.hypot(dx,dy,dz);if(d<r*2.2){const f=1-d/(r*2.2),m=o===P?1:o.t==='H'?30:Math.max(.5,o.h*o.w*1.5),k=18*f/m/(d||1);o.v.x+=dx*k;o.v.y+=dy*k+4*f/m;o.v.z+=dz*k;
+  if(o===P){if(f>.3)hurtP(Math.ceil(8*f*dif))}else{o.hp-=20*f;if(o.hp<=0&&!o.dead)ke(o)}}}}
+// ---- player, inventory, crafting
+const P={p:new V3,v:new V3,w:.3,h:1.75,yaw:0,pit:0,hp:20,hg:20,gnd:0,inv:0,t:0,fs:0},K={},mb={},bf={jump:0,float:0,speed:0,gv:0,gvs:1,shield:0};
+function notify(t){$('#msg').textContent=t;msgT=3.5}
+function addItem(id,n){const I=W.IT[id];for(const s of inv)if(s&&s.id===id&&s.n<64){const a=Math.min(n,64-s.n);s.n+=a;n-=a;if(!n)break}
+ for(let i=0;i<27&&n>0;i++)if(!inv[i]){const a=Math.min(n,64);inv[i]={id,n:a};n-=a}notify('+ '+I.n);renderHB()}
+const dec=i=>{if(!--inv[i].n)inv[i]=null;renderHB()};
+function sl(s,fn,x){const d=document.createElement('div');d.className='s'+(x||'');if(s){d.style.setProperty('--c','#'+W.IT[s.id].c.toString(16).padStart(6,'0'));d.innerHTML='<i></i><b>'+s.n+'</b>';d.title=W.IT[s.id].n+' · '+(W.IT[s.id].kind||W.IT[s.id].fx||'block')+' · damage '+W.IT[s.id].d}if(fn)d.onclick=fn;return d}
+function renderHB(){const h=$('#hb');h.innerHTML='';for(let i=0;i<9;i++)h.appendChild(sl(inv[i],0,i===sel?' on':''));const s=inv[sel];$('#nm').textContent=s?W.IT[s.id].n+' · damage '+W.IT[s.id].d:''}
+function clk(i){const s=inv[i];if(!cur){cur=s;inv[i]=null}else if(!s){inv[i]=cur;cur=null}else if(s.id===cur.id){const m=Math.min(cur.n,64-s.n);s.n+=m;cur.n-=m;if(!cur.n)cur=null}else{inv[i]=cur;cur=s}rI()}
+function cc(i){const s=cgs[i];if(cur&&(!s||s.id===cur.id)){cgs[i]=s?{id:s.id,n:s.n+1}:{id:cur.id,n:1};if(!--cur.n)cur=null}else if(!cur&&s){cur=s;cgs[i]=null}rI()}
+function mkc(r){if(!r)return;for(let i=0;i<4;i++)if(cgs[i]&&!--cgs[i].n)cgs[i]=null;addItem(r[0],r[1]);if(!rec[r[2]]){rec[r[2]]=r[2].split(',').map(i=>W.IT[i].n).join(' + ')+' → '+W.IT[r[0]].n+' ×'+r[1];notify('Recipe discovered!')}snd(500,.1,'triangle');rI()}
+function rI(){const iv=$('#iv'),cr=$('#cr');iv.innerHTML='';inv.forEach((s,i)=>{iv.appendChild(sl(s,()=>clk(i),i===sel?' on':''));if(i%9===8)iv.appendChild(document.createElement('br'))});
+ cr.innerHTML='<h3>Crafting 2×2 — known recipes only</h3>';cgs.forEach((s,i)=>{cr.appendChild(sl(s,()=>cc(i)));if(i===1)cr.appendChild(document.createElement('br'))});
+ const r=rcp(cgs.map(s=>s&&s.id));cr.append(' → ');cr.appendChild(sl(r?{id:r[0],n:r[1]}:null,()=>mkc(r)));
+ $('#ct').textContent=(cur?'Holding '+W.IT[cur.id].n+' ×'+cur.n+' · ':'')+(r?'Result: '+W.IT[r[0]].n+' ×'+r[1]+' (click it)':'Click a stack, then a slot. Top row is your hotbar.')}
+function retI(){for(let i=0;i<4;i++)if(cgs[i]){addItem(cgs[i].id,cgs[i].n);cgs[i]=null}if(cur){addItem(cur.id,cur.n);cur=null}}
+function jr(){const I=W.IT,L=o=>Object.values(o).map(s=>'<p>• '+s+'</p>').join('')||'<p>nothing yet</p>';$('#jb').innerHTML=`<h2>Journal</h2><h3>This world</h3>${summ().map(s=>'<p>'+s+'</p>').join('')}<h3>Rumors</h3><p>• ${I[W.hs.a[0]].n} + ${I[W.hs.a[1]].n} opens a door beyond the sky.</p><p>• Harold fears something made from ${I[W.hs.b[0]].n} + ${I[W.hs.b[1]].n}.</p><p>• Use the Portal Key to create a visible portal in front of you. Walk into it to travel.</p><p>• After Harold falls, use the Laxative Sigil to summon a pink portal. The Laxative Dude can only be damaged while his head is out (five seconds).</p><h3>Recipes discovered</h3>${L(rec)}<h3>Observed rules</h3>${L(obs)}<button id="jc">Close</button>`;$('#jc').onclick=()=>setUi('play')}
+// ---- mining, placing, items
+function brk(t){const b=t.b,d=W.dp[b],f=W.fx[b],I=W.IT;sb(t.x,t.y,t.z,0);mined++;addItem(d[0],d[1]);obs['d'+b]=`${I[b].n} drops ${I[d[0]].n} ×${d[1]}`;puff(t.x+.5,t.y+.5,t.z+.5,BL[b][1]);snd(90+b*10,.12,'sawtooth',.06);
+ if(f){obs['f'+b]=`Mining ${I[b].n} ${FXB[f]}`;
+  if(f==='tp'){const x=Math.floor(P.p.x+(Math.random()-.5)*24),z=Math.floor(P.p.z+(Math.random()-.5)*24),y=topY(x,z);if(y>0){P.p.set(x+.5,y+.2,z+.5);P.v.set(0,0,0);snd(700,.2,'sine')}}
+  else if(f==='spawn')spawn(Math.random()<.5?'mite':'guest',t.x+.5,t.y+.5,t.z+.5);
+  else{const s0=S,d0=dim;setTimeout(()=>{if(S===s0&&dim===d0&&gb(t.x,t.y,t.z)===0)sb(t.x,t.y,t.z,b)},6000)}}}
+function use(){const s=inv[sel];if(!s)return;const it=W.IT[s.id];
+ if(it.blk){if(!tg)return;const x=tg.x+tg.nx,y=tg.y+tg.ny,z=tg.z+tg.nz,b=gb(x,y,z);if(b!==0&&b!==8)return;
+  if(P.p.x+P.w>x&&P.p.x-P.w<x+1&&P.p.z+P.w>z&&P.p.z-P.w<z+1&&P.p.y+P.h>y&&P.p.y<y+1)return;sb(x,y,z,s.id);dec(sel);snd(200,.06);return}
+ const f=it.fx,k=it.kind;let eat=1;obs['u'+s.id]=`${it.n}: ${FXD[f]||k||'a strange randomized effect'}`;
+ if(k==='ranged'||k==='bow'||k==='spear'){firePlayer(it);eat=0}
+ else if(k==='ammo'){firePlayer(it);return}
+ else if(k==='bed'){if(!tg){notify('Aim at a block to place the bed.');return}placeBed(tg.x+tg.nx,tg.y+tg.ny,tg.z+tg.nz);}
+ else if(k==='laxsigil'){if(!won){notify('The sigil is dormant. Defeat Harold first.');return}spawnPortal('laxative');eat=0}
+ else if(k==='shield'){bf.shield=12;notify('A crackling shield surrounds you for 12 seconds.')}
+ else if(k==='summon'||k==='lure'){spawn(Math.random()<.5?'mite':'riftling',P.p.x+3,P.p.y+1,P.p.z+2);notify(it.n+' calls something over.')}
+ else if(k==='freeze'){for(const e of ents)if(e.p.distanceTo(P.p)<10)e.frozen=4;notify('Nearby creatures freeze for four seconds.')}
+ else if(k==='gravity'){bf.gv=8;bf.gvs=.3;notify('Gravity becomes suspiciously weak.')}
+ else if(k==='light'){flash=.28;for(const e of ents)if(e.t==='guest')e.hp-=12;notify('A pulse of light drives back the Hollow Guests.')}
+ else if(k==='web'){for(const e of ents)if(e.p.distanceTo(P.p)<9)e.frozen=3;notify('Sticky strands pin nearby creatures down.')}
+ else if(k==='bomb'){const o=tg?[tg.x+.5,tg.y+.5,tg.z+.5]:cam.getWorldDirection(new V3).multiplyScalar(4).add(cam.position).toArray();boom(o[0],o[1],o[2],4);}
+ else if(k==='teleport'){const x=Math.floor(P.p.x+(Math.random()-.5)*22),z=Math.floor(P.p.z+(Math.random()-.5)*22),y=topY(x,z);if(y>0){P.p.set(x+.5,y+.2,z+.5);P.v.set(0,0,0);notify('The item folds space.')}else notify('It tried to teleport you somewhere impossible.')}
+ else if(k==='speed'){bf.speed=20;notify('Speed boost activated.')}
+ else if(k==='jump'){bf.jump=25;notify('Your jump becomes enormous.')}
+ else if(k==='heal'||f==='heal')P.hp=Math.min(20,P.hp+10);else if(k==='food'||f==='food')P.hg=Math.min(20,P.hg+10);
+ else if(k==='boom'||f==='boom'){const o=tg?[tg.x+.5,tg.y+.5,tg.z+.5]:cam.getWorldDirection(new V3).multiplyScalar(5).add(cam.position).toArray();boom(o[0],o[1],o[2],3.5)}
+ else if(f==='jump')bf.jump=25;else if(f==='float')bf.float=15;else if(f==='speed')bf.speed=20;else if(f==='launch')P.v.y=Math.max(P.v.y,7);
+ else if(f==='smite'){flash=.2;snd(50,.5,'sawtooth',.15);for(const e of ents)if(!e.dead&&e.p.distanceTo(P.p)<10){e.hp-=15;e.fl=.2;if(e.hp<=0)ke(e)}}
+ else if(f==='key'){if(dim)spawnPortal('return');else if(!won)spawnPortal('harold');else notify('Harold is already defeated. Craft the Laxative Sigil to open the pink portal.');eat=0}
+ else if(f==='float'){bf.float=15}
+ else {notify(it.n+' does something nobody fully understands.');if(k==='melee')eat=0}
+ if(eat)dec(sel)}
+// ---- creatures and Harold
+function spawn(t,x,y,z){if(ents.length>26)return;const s=SP[t],g=new THREE.Group(),ms=[],M=c=>{const m=new THREE.MeshLambertMaterial({color:c});ms.push(m);return m},B=(w,h,d,m,px,py,pz)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(px,py,pz);g.add(o);return o},[w,h,d]=s.s,r=rng(S+99);
+ let c1=s.c;if(t==='H')c1=r()*0xffffff|0;
+  const body=B(w,h*.5,d,M(c1),0,h*.5,0);const hd=B(w*.7,h*.22,d*.8,M(s.c2),0,t==='L'?h*.5:h*.84,0);B(w*.5,h*.04,.05,M(t==='L'?0x7b173e:0x222222),0,h*.86,-d*.4);if(t==='L'){body.geometry.dispose();body.geometry=new THREE.SphereGeometry(1,14,12);body.scale.set(w*.65,h*.37,d*.65);body.position.y=h*.38;hd.geometry.dispose();hd.geometry=new THREE.SphereGeometry(.42,12,10);hd.scale.set(1,1,1);hd.position.y=h*.5;}
+ const lm=sx=>{const l=new THREE.Mesh(new THREE.BoxGeometry(w*.22,h*.45,w*.22),M(c1));l.geometry.translate(0,-h*.22,0);l.position.set(sx*w*.62,h*.5,0);g.add(l);return l},l1=lm(1),l2=lm(-1);
+ if(t==='H'){hd.scale.set(.8+r()*.9,.8+r()*.9,1);l1.scale.y=.6+r()*1.4;l2.scale.y=.6+r()*1.4;for(let i=0;i<3;i++)B(.6,.6,.6,M(r()*0xffffff|0),(r()-.5)*5,2+r()*4,(r()-.5)*3)}
+ g.position.set(x,y,z);sc.add(g);const e={t,p:new V3(x,y,z),v:new V3,w:Math.max(w,d)/2,h,hp:s.hp,mx:s.hp,m:g,ms,l1,l2,head:hd,body,cd:1,fl:0,an:0,wt:0,wa:0,mv:0,id:++eid,gnd:0,pz:0,lp:0,wu:0,sl:5,sw:0,gt:6,tt:5,tw:0,tx:0,ty:0,tz:0,headOut:false,headTime:0,headCd:2.5,shotCd:1.8,frozen:0};ents.push(e);return e}
+function rmE(e){sc.remove(e.m);e.m.traverse(o=>o.geometry&&o.geometry.dispose());e.ms.forEach(m=>m.dispose())}
+function spawnH(){const b=island(),o=[8,-8,0].find(d=>d===0||isl(b[0]+d,b[1])),q=isl(b[0]+o,b[1]);spawn('H',b[0]+o+.5,q[0]+1.2,b[1]+.5)}
+function spawnLaxative(){const b=island(),o=[-10,10,0].find(d=>d===0||isl(b[0]+d,b[1])),q=isl(b[0]+o,b[1]);spawn('L',b[0]+o+.5,q[0]+1.4,b[1]+.5);gurgle();notify('Laxative Dude gurgles: glrrblblblbl')}
+function ke(e){e.dead=1;kills++;const l=W.loot[e.t]||W.loot.guest;addItem(l,e.t==='grazer'?2:e.t==='fluffball'?3:e.t==='H'?16:1);obs['k'+e.t]=`${SP[e.t].n} drops ${W.IT[l].n}`;puff(e.p.x,e.p.y+1,e.p.z,SP[e.t].c);
+ if(e.t==='H'){won=1;addItem(W.coreId,1);obs.laxRecipe="Harold dropped Harold's Core. Combine Harold's Core + Glimmer to craft the Laxative Sigil, then use it in the Overworld to open the pink portal.";for(const x of ents)x.dead=1;setTimeout(()=>{if(W){setUi('end');$('#eb').innerHTML=`<h2>Harold sits down.</h2><p>"...Fine. Keep it. It was never really mine."</p><p>The Overworld begins to mutate. New creatures have arrived, strange crystals are growing, and Harold's defeat has awakened a second portal recipe.</p><p>Harold dropped a Core. Combine Harold's Core + Glimmer in the crafting grid to make the Laxative Sigil, then use it in the Overworld to summon the next portal.</p><button id="ct2">Return to the changed Overworld</button>`;$('#ct2').onclick=()=>{warp(0);setUi('play');notify('Harold is gone. New mobs and strange crystals now haunt the Overworld.')}}},900)}else if(e.t==='L'){laxWon=1;for(const x of ents)x.dead=1;setTimeout(()=>{if(W){setUi('end');$('#eb').innerHTML=`<h2>Laxative Dude has stopped gurgling.</h2><p>Blorp. The pink portal collapses into a harmless bubble.</p><p>You survived both bosses. The Overworld is still changed, and you can keep exploring it.</p><button id="ct2">Return to the Overworld</button>`;$('#ct2').onclick=()=>{warp(0);setUi('play');notify('The second boss is defeated. The Overworld remains changed.')}}},900)}}
+function atk(e){if(e.t==='L'&&!e.headOut){notify('Its head is tucked away. Wait for it to rise!');return}const s=inv[sel];let d=s?W.IT[s.id].d:1;if(e.t==='H'&&e.pz===4&&!(s&&s.id===W.bane)){notify("Harold's final defense rejects that weapon. Use Harold's Sealbreaker.");d=0;}e.hp-=d;e.fl=.15;
+ const m=e.t==='H'?25:Math.max(1,e.h*e.w*2),k=new V3(e.p.x-P.p.x,0,e.p.z-P.p.z).normalize().multiplyScalar((6+d*.4)/m);e.v.x+=k.x;e.v.z+=k.z;if(e.t!=='H')e.v.y+=3;snd(160+Math.random()*60,.08);sw=.3;if(e.hp<=0)ke(e)}
+function pickE(){const d=new V3(0,0,-1).applyQuaternion(cam.quaternion);let best=null,bt=4.5;for(const e of ents){if(e.dead)continue;if(e.t==='L'&&!e.headOut)continue;const rel=(e.t==='L'?new V3(e.p.x,e.p.y+e.head.position.y,e.p.z):new V3(e.p.x,e.p.y+e.h/2,e.p.z)).sub(cam.position),t=rel.dot(d),rad=e.t==='L'?.72:Math.max(e.w,e.h*.35)+.15;if(t>0&&t<bt&&rel.addScaledVector(d,-t).length()<rad){best=e;bt=t}}return best}
+function hurtP(d){if(P.inv>0||ui!=='play')return;if(bf.shield>0)d=Math.max(1,d*.35);P.hp-=d;P.inv=.6;$('#dm').style.opacity=.9;setTimeout(()=>$('#dm').style.opacity=0,160);snd(120,.15,'sawtooth',.1)}
+function updE(e,dt){e.cd-=dt;e.fl-=dt;e.frozen=Math.max(0,(e.frozen||0)-dt);const t=e.t,to=new V3(P.p.x-e.p.x,0,P.p.z-e.p.z),d=to.length()||1,gs=W.g*(dim?.6:1);to.divideScalar(d);let mx=0,mz=0,sp=SP[t].sp;if(e.frozen>0)sp=0;
+ if(t==='guest'){const lk=new V3(0,0,-1).applyQuaternion(cam.quaternion),seen=(-lk.x*to.x-lk.z*to.z)/(Math.hypot(lk.x,lk.z)||1)>.5&&d<45;if(!seen&&d<36){mx=to.x;mz=to.z}}
+ else if(t==='mite'){if(d<22){const a=Math.sin(P.t*5+e.id)*.7,c=Math.cos(a),s=Math.sin(a);mx=to.x*c-to.z*s;mz=to.x*s+to.z*c}}
+ else if(t==='grazer'){e.wt-=dt;if(e.wt<=0){e.wt=2+Math.random()*3;e.wa=Math.random()*6.28;e.mv=Math.random()<.6}if(e.mv){mx=Math.sin(e.wa);mz=Math.cos(e.wa)}}
+  else if(t==='H'){const f=e.hp/e.mx;e.pz=f>.66?1:f>.33?2:f>.12?3:4;sp*=1+.15*e.pz;mx=to.x;mz=to.z;if(d<2.4)mx=mz=0;
+  if(e.pz!==e.lp){e.lp=e.pz;notify(['','Harold: "This is MY world. Do wipe your feet."','Phase 2: Property Dispute','Phase 3: Reality Is Negotiable',`Harold's Last Word: only the ${W.IT[W.bane].n} hurts him now`][e.pz]);snd(60,1,'sawtooth',.12);if(e.pz===1||e.pz===3)for(let i=0;i<2;i++)spawn(e.pz===1?'mite':'guest',e.p.x+(i?4:-4),e.p.y+1,e.p.z)}
+  if(e.cd<=0&&d<4&&!e.wu){e.wu=.8;e.cd=2.2}
+  if(e.wu>0){e.fl=.1;e.wu-=dt;if(e.wu<=0&&d<4.6)hurtP(8*dif)}
+  e.sl-=dt;if(e.sl<=0&&!e.sw){e.sl=7;e.sw=1.1;notify('Harold raises a very large foot...')}
+  if(e.sw>0){e.fl=.1;e.sw-=dt;if(e.sw<=0){e.sw=0;if(P.gnd&&d<9){hurtP(5*dif);P.v.y=11}boom(e.p.x,e.p.y,e.p.z,2.6,e)}}
+  if(e.pz>=2){e.gt-=dt;if(e.gt<=0){e.gt=10;bf.gv=6;bf.gvs=Math.random()<.5?.2:2.6;notify('Harold disputes your gravity!')}}
+  if(e.pz>=3){e.tt-=dt;if(e.tt<=0&&!e.tw){e.tt=4.5;e.tw=1.2;e.tx=P.p.x;e.ty=P.p.y;e.tz=P.p.z;notify('The ground beneath you is being repossessed!')}if(e.tw>0){e.tw-=dt;if(e.tw<=0){e.tw=0;boom(e.tx,e.ty-1,e.tz,3,e)}}}
+   if(e.p.y<-12){e.p.set(P.p.x+3,P.p.y+4,P.p.z);e.v.set(0,0,0)}}
+  else if(t==='L'){if(d>3.2){mx=to.x;mz=to.z}else{mx=to.x*.22;mz=to.z*.22}e.headCd-=dt;e.shotCd-=dt;if(e.headOut){e.headTime-=dt;e.head.position.y=e.h*1.04;if(e.headTime<=0){e.headOut=false;e.head.position.y=e.h*.5;e.headCd=4.3;notify('Laxative Dude sucks his head back into his body!')}}else if(e.headCd<=0){e.headOut=true;e.headTime=5;e.head.position.y=e.h*1.04;gurgle();notify('Laxative Dude gurgles loudly! His head is out for 5 seconds!')}if(e.shotCd<=0){e.shotCd=1.75;const aim=new V3(P.p.x-(e.p.x),P.p.y+1.1-(e.p.y+1.4),P.p.z-e.p.z).normalize();for(let j=-1;j<=1;j++){const v=aim.clone().add(new V3(j*.13,0,0)).normalize().multiplyScalar(9);shootProjectile(e.p.clone().add(new V3(0,1.7,0)),v,0x6d321f,5*dif,'enemy',5)}gurgle();if(Math.random()<.6)notify('Laxative Dude gurgles: blblblbl glorp!')}}
+  else if(t==='riftling'||t==='bloombeast'||t==='prism'){mx=to.x;mz=to.z;if(t==='prism'&&d<8){e.wt-=dt;if(e.wt<=0){e.wt=2;shootProjectile(e.p.clone().add(new V3(0,1.1,0)),new V3(to.x*.8,.25,to.z*.8).normalize().multiplyScalar(7),0xffc64b,4*dif,'enemy',4)}}}
+  if((['guest','mite','riftling','bloombeast','prism'].includes(t))&&Math.abs(P.p.y-e.p.y)<2.2&&d<(t==='guest'?1.4:1.35)+.35&&e.cd<=0){hurtP(SP[t].dm*dif);e.cd=1.1}
+ const ax=Math.min(1,dt*8);e.v.x+=(mx*sp-e.v.x)*ax;e.v.z+=(mz*sp-e.v.z)*ax;e.v.y=Math.max(-40,e.v.y-gs*dt);
+ if(e.gnd&&(mx||mz)){const px=e.p.x+mx*(e.w+.3),pz=e.p.z+mz*(e.w+.3);if(hitB(px,e.p.y+.1,pz,.2,.5)&&!hitB(px,e.p.y+1.2,pz,.2,.5))e.v.y=Math.sqrt(2*gs*(t==='H'?1.6:1.2))}
+ step(e,dt);if(mx||mz)e.m.rotation.y=Math.atan2(-mx,-mz);else if(t==='H')e.m.rotation.y=Math.atan2(-to.x,-to.z);
+ e.an+=dt*(mx||mz?9:0);e.l1.rotation.x=Math.sin(e.an)*.8;e.l2.rotation.x=-Math.sin(e.an)*.8;if(e.wu>0)e.l1.rotation.x=e.l2.rotation.x=-2.4;
+ e.m.position.copy(e.p);const c=e.fl>0?0x771111:0;for(const m of e.ms)m.emissive.setHex(c)}
+function spawnTick(dt){spT-=dt;if(spT>0)return;spT=(won&&!dim?2.3:3)/dif;const hs=ents.filter(e=>['guest','mite','riftling','bloombeast','prism'].includes(e.t)).length,gz=ents.filter(e=>e.t==='grazer').length,a=Math.random()*6.283,r=16+Math.random()*10,x=Math.floor(P.p.x+Math.cos(a)*r),z=Math.floor(P.p.z+Math.sin(a)*r),y=topY(x,z),night=dl<.35;if(y<0)return;if(dim===1){if(hs<4)spawn(Math.random()<.5?'guest':'mite',x+.5,y+.2,z+.5)}else if(dim===2){if(hs<1&&!ents.some(e=>e.t==='L'))spawnLaxative()}else if(won){if(hs<7)spawn(['riftling','bloombeast','prism'][Math.random()*3|0],x+.5,y+.2,z+.5);else if(gz<3)spawn('grazer',x+.5,y+.2,z+.5)}else if(night?hs<4+dif*2:gz<4)spawn(night?(Math.random()<.5?'guest':'mite'):'grazer',x+.5,y+.2,z+.5)}
+// ---- game flow
+function warp(t){dim=t;unload();P.v.set(0,0,0);flash=.5;snd(70,.8,'sawtooth',.12);
+ if(t){const b=island(),q=isl(b[0],b[1]);P.p.set(b[0]+.5,q[0]+1.2,b[1]+.5)}else if(ret)P.p.set(ret[0],ret[1]+.3,ret[2]);else P.p.set(.5,Math.max(h0(0,0),SEA)+3,.5);
+ stream(2,999,999);if(t===1&&!won)spawnH();if(t===2&&!laxWon)spawnLaxative()}
+function die(){notify('You died. Half of your items were lost to the void.');inv.forEach((s,i)=>{if(s){s.n>>=1;if(!s.n)inv[i]=null}});P.hp=P.hg=20;P.inv=2;bf.jump=bf.float=bf.speed=bf.gv=0;ret=null;warp(0);renderHB()}
+function save(){if(!W)return;try{localStorage['cc:'+wname]=JSON.stringify({s:S,ri:W.ri,df:dif,dim,mods,p:[P.p.x,P.p.y,P.p.z],yaw:P.yaw,hp:P.hp,hg:P.hg,inv,rec,obs,won,laxWon,mined,kills,tod,beds:bedObjs.map(b=>[b.g.position.x,b.g.position.y,b.g.position.z])})}catch(e){}}
+function start(name,seed,ri,df,o){unload();clearProps();wname=name;S=seed;dif=df;W=mkWorld(S,ri);mods={};rec={};obs={};kills=mined=won=laxWon=0;dim=0;ret=null;tod=.3;inv=Array(27).fill(null);cgs=[null,null,null,null];cur=null;sel=0;P.v.set(0,0,0);P.hp=P.hg=20;P.yaw=P.pit=0;
+ if(o){dim=o.dim;mods=o.mods||{};inv=o.inv||inv;rec=o.rec||{};obs=o.obs||{};won=o.won||0;laxWon=o.laxWon||0;mined=o.mined||0;kills=o.kills||0;tod=o.tod||.3;P.hp=o.hp||20;P.hg=o.hg||20;P.yaw=o.yaw||0;P.p.set(...o.p);if(o.beds)for(const b of o.beds)placeBed(b[0],b[1],b[2]);stream(2,999,999);if(dim===1&&!won)spawnH();if(dim===2&&!laxWon)spawnLaxative()}
+ else{for(let i=1;i<=6;i++)addItem(i,12);addItem(W.rangedId,1);addItem(W.ammoId,16);addItem(W.bedId,1);warp(0)}
+ renderHB();setUi('play');notify('World ready. '+(W.IT.length-1)+' possible items. J opens the journal.')}
+function listS(){const o=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('cc:'))o.push(k.slice(3))}}catch(e){}return o}
+function lw(){const d=$('#sv');d.innerHTML='';listS().forEach(n=>{const b=document.createElement('button');b.textContent='▶ '+n;b.onclick=()=>{try{const o=JSON.parse(localStorage['cc:'+n]);start(n,o.s,o.ri,o.df,o)}catch(e){d.textContent='That save could not be read.'}};d.appendChild(b)});if(!d.children.length)d.textContent='No saved worlds yet.'}
+const lock=()=>{if(nolock)return;try{const p=R.domElement.requestPointerLock();p&&p.catch&&p.catch(()=>{})}catch(e){}};
+function setUi(u){const was=ui;if(was==='inv'&&u!=='inv')retI();ui=u;const m={menu:'menu',pause:'pause',inv:'invp',jrn:'jrn',end:'end'};for(const x of['menu','pause','invp','jrn','end'])$('#'+x).classList.toggle('hide',x!==m[u]);
+ $('#hud').classList.toggle('hide',u==='menu');if(u==='play')lock();else if(document.pointerLockElement)document.exitPointerLock();if(u==='inv')rI();if(u==='jrn')jr()}
+function upd(dt){tod+=dt/240;P.t+=dt;P.inv-=dt;cd-=dt;cd2-=dt;sw=Math.max(0,sw-dt);as+=dt;
+ for(const k of['jump','float','speed','gv','shield'])bf[k]=Math.max(0,bf[k]-dt);
+ const fw=(K.KeyW?1:0)-(K.KeyS?1:0),rt=(K.KeyD?1:0)-(K.KeyA?1:0),mv=fw||rt?1:0,sp=((K.ShiftLeft||K.ShiftRight)&&fw>0?7.5:5)*(bf.speed>0?1.7:1),sy=Math.sin(P.yaw),cy=Math.cos(P.yaw),L=Math.hypot(fw,rt)||1;
+ const fx=Math.floor(P.p.x),fz=Math.floor(P.p.z),inW=gb(fx,Math.floor(P.p.y+.5),fz)===8,gs=(bf.float>0?.2:1)*(bf.gv>0?bf.gvs:1)*(dim?.6:1),wm=inW?.6:1;
+ const tx=(-sy*fw+cy*rt)/L*sp*mv*wm,tz=(-cy*fw-sy*rt)/L*sp*mv*wm,a=1-Math.exp(-(P.gnd?W.fr:inW?6:3)*dt);
+ P.v.x+=(tx-P.v.x)*a;P.v.z+=(tz-P.v.z)*a;P.v.y=Math.max(-50,P.v.y-W.g*gs*(inW?.2:1)*dt);if(inW)P.v.y*=Math.exp(-1.5*dt);
+ if(K.Space){if(inW)P.v.y=Math.min(P.v.y+15*dt,2.8);else if(P.gnd)P.v.y=Math.sqrt(2*W.g*Math.min(W.jh,1.25))*(bf.jump>0?1.1:1)}
+ const vb=P.v.y,wg=P.gnd;step(P,dt);const th=Math.sqrt(2*W.g*gs*4.2);if(P.gnd&&!wg&&!inW&&vb<-th){P.inv=0;hurtP(Math.ceil((-vb-th)*.6))}
+ P.fs+=Math.hypot(P.v.x,P.v.z)*dt;if(P.gnd&&P.fs>2.4){P.fs=0;snd(70+(gb(fx,Math.floor(P.p.y)-1,fz)||1)*14,.05,'triangle',.05)}
+ cam.position.set(P.p.x,P.p.y+1.6,P.p.z);cam.rotation.set(P.pit,P.yaw,0);
+ P.hg-=dt*(.05+(K.ShiftLeft&&fw>0?.05:0));if(P.hg<=0){P.hg=0;P.hp-=dt*.5}else if(P.hg>12&&P.hp<20){P.hp=Math.min(20,P.hp+dt*.5);P.hg-=dt*.03}
+ if(P.hp<=0||P.p.y<-30)die();
+ tg=ray();const s=inv[sel],hd=s?W.IT[s.id].d:1;
+  if(mb[0]){const picked=pickE(),current=inv[sel],kind=current&&W.IT[current.id].kind;if(['ranged','bow','spear'].includes(kind)){if(cd<=0){firePlayer(W.IT[current.id]);cd=.3}mn=null}else if(picked){if(cd<=0){atk(picked);cd=.45}}else if(tg){const k=tg.x+','+tg.y+','+tg.z;if(!mn||mn.k!==k)mn={k,t:0,f:0};const need=(BL[tg.b]||BL[3])[2]*(W.hm[tg.b]||1)/(1+(current?W.IT[current.id].d:1)*.12);mn.t+=dt;mn.f=mn.t/need;if(sw<=0){sw=.3;snd(110+tg.b*12,.04,'square',.04)}if(mn.t>=need){brk(tg);mn=null}}else mn=null}else mn=null;
+ if(mb[2]&&cd2<=0){use();cd2=.25;sw=.3}
+ spawnTick(dt);for(const e of ents)if(!e.dead)updE(e,dt);ents=ents.filter(e=>{if(e.dead||(e.t!=='H'&&e.t!=='L'&&Math.hypot(e.p.x-P.p.x,e.p.z-P.p.z)>75)){rmE(e);return false}return true});updateProps(dt);
+ for(const q of pool)if(q.l>0){q.l-=dt;q.v.y-=18*dt;q.m.position.addScaledVector(q.v,dt);if(q.l<=0)q.m.visible=false}
+ stream(RD,1,3);if(as>20){as=0;save()}}
+function ren(dt){dl=dim?.7:Math.max(.14,Math.min(1,Math.sin(tod*6.2832)*1.3+.55));const t=(dl-.14)/.86,c=dim?[.17,.1,.27]:[.02+.54*t,.03+.74*t,.07+.93*t];
+ const uw=gb(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z))===8;
+ if(flash>0){flash-=dt;c[0]=c[1]=c[2]=1}if(uw){c[0]*=.2;c[1]*=.4;c[2]=.5*dl+.1}
+ sc.background.setRGB(c[0],c[1],c[2]);sc.fog.color.copy(sc.background);sc.fog.near=uw?.5:RD*CS*.45;sc.fog.far=uw?18:RD*CS*.95;
+ mO.color.setScalar(dl);mW.color.setScalar(dl);am.intensity=dl*.9;su.intensity=dl*.6;
+ hand.material.color.setHex(inv[sel]?W.IT[inv[sel].id].c:0xd8a77a);hand.rotation.x=-Math.sin(sw/.3*Math.PI)*1.1;
+ hl.visible=crk.visible=!!tg&&ui==='play';if(tg){hl.position.set(tg.x+.5,tg.y+.5,tg.z+.5);crk.position.copy(hl.position);crk.material.opacity=mn?Math.min(1,mn.f)*.6:0}
+ $('#hp').style.width=Math.max(0,P.hp)*5+'%';$('#hg').style.width=P.hg*5+'%';
+ const H=ents.find(e=>(e.t==='H'||e.t==='L')&&!e.dead);$('#boss').classList.toggle('hide',!H);if(H){$('#boss').dataset.label=H.t==='L'?'LAXATIVE DUDE':'HAROLD';$('#boss i').style.width=Math.max(0,H.hp/H.mx*100)+'%'}
+ if((msgT-=dt)<=0)$('#msg').textContent='';
+ if(fc++%20===0){const m=performance.memory;$('#info').textContent=`FPS ${fps|0} · items ${W?W.IT.length-1:0} · chunks ${ch.size} · creatures ${ents.length} · ${dim===2?'Laxative Arena':dim?'Shattered Reach':'Overworld'}${m?' · '+(m.usedJSHeapSize/1048576|0)+' MB':''}`}
+ R.render(sc,cam)}
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.05);last=now;fps+=(1/Math.max(dt,.001)-fps)*.05;if(W){if(ui==='play')upd(dt);ren(dt)}}
+// ---- input and menus
+addEventListener('keydown',e=>{if(e.code==='Tab')e.preventDefault();if(e.repeat&&e.code==='KeyF')return;K[e.code]=1;if(ui==='play'){if(e.code>='Digit1'&&e.code<='Digit9'){sel=+e.code.slice(5)-1;renderHB()}else if(e.code==='KeyE')setUi('inv');else if(e.code==='KeyJ')setUi('jrn');else if(e.code==='Tab')dropStack();else if(e.code==='KeyP'){setUi('pause');save()}}
+ else if((ui==='inv'&&e.code==='KeyE')||(ui==='jrn'&&e.code==='KeyJ')||(ui==='pause'&&e.code==='KeyP'))setUi('play');if(e.code==='Space'||e.code==='Tab'||e.code.startsWith('Arrow'))e.preventDefault()});
+addEventListener('keyup',e=>K[e.code]=0);addEventListener('blur',()=>{for(const k in K)K[k]=0;mb[0]=mb[2]=0});
+addEventListener('wheel',e=>{if(ui==='play'){sel=(sel+(e.deltaY>0?1:8))%9;renderHB()}});
+document.addEventListener('mousemove',e=>{if(ui==='play'&&document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pit=cl(P.pit-e.movementY*.0022,-1.55,1.55)}});
+R.domElement.addEventListener('mousedown',e=>{if(AC&&AC.state==='suspended')AC.resume();if(ui!=='play')return;if(!document.pointerLockElement&&!nolock){lock();return}mb[e.button]=1;e.preventDefault()});
+addEventListener('mouseup',e=>mb[e.button]=0);R.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===R.domElement)everLocked=1;else if(ui==='play'&&!nolock)notify('Mouse unlocked. Click the game to relock, or press P to pause.')});
+document.addEventListener('pointerlockerror',()=>{if(!everLocked){nolock=1;notify('Mouse look unavailable: click the game to try again, or press P to pause')}});
+$('#go').onclick=()=>{const v=$('#sdv').value.trim();snd(300,.05);start($('#wn').value.trim()||'World',v?sd(v):Math.random()*2147483647|0,+$('#ris').value,+$('#dfs').value,null)};
+$('#rsm').onclick=()=>setUi('play');$('#sv2').onclick=()=>{save();notify('Saved')};$('#qt').onclick=()=>{save();unload();W=null;setUi('menu');lw()};$('#rd').onchange=e=>RD=+e.target.value;
+const rs=()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener('resize',rs);rs();
+window.CC={test(){const o={},a=mkWorld(7,.5),b=mkWorld(7,.5),sW=W,sS=S,sD=dim;W=a;S=7;dim=0;
+ o.worldDeterministic=JSON.stringify(a)===JSON.stringify(b);o.recipeStable=JSON.stringify(rcp([2,3]))===JSON.stringify(rcp([3,2]));
+ o.keyRecipe=rcp(a.kk.split(',').map(Number))[0]===a.key;o.baneRecipe=rcp(a.kb.split(',').map(Number))[0]===a.bane;
+ o.terrainDeterministic=JSON.stringify(gen(0,0).d)===JSON.stringify(gen(0,0).d);o.dropsValid=Object.values(a.dp).every(d=>a.IT[d[0]]&&d[0]!==8);o.itemPool=a.IT.length-1;o.hasRanged=a.IT.some(i=>i.kind==='ranged'||i.kind==='bow');o.hasBed=a.IT.some(i=>i.kind==='bed');W=sW;S=sS;dim=sD;return o}};
+// ===== CHAOSCRAFT expansion layer v2: gems, quests, merchant, death, loader, settings =====
+const num=(v,d)=>Number.isFinite(+v)&&v!==null&&v!==''?+v:d,fmt=t=>(t/60|0)+'m '+(t%60|0)+'s',SH={a:0},SL={};
+const ST=(()=>{try{return Object.assign({sh:1,vg:1,gf:'Medium'},JSON.parse(localStorage.ccset||'{}'))}catch(e){return{sh:1,vg:1,gf:'Medium'}}})(),svS=()=>{try{localStorage.ccset=JSON.stringify(ST)}catch(e){}};
+const HOS=['guest','mite','riftling','bloombeast','prism'],GV={guest:1,mite:1,riftling:3,bloombeast:4,prism:3};
+let X;const xr=()=>X={g:0,eg:0,qd:{},hk:0,bed:0,spawn:null,reach:0,hint:{},t:0,k0:0,g0:0,mcd:0,m:null,dead:0,cause:'',nt:{},cfn:0,busy:0,sl:'',h:{id:0,met:0,pz:1,nx:0},l:{id:0,hp:0,nx:0}};xr();
+const gem=n=>{X.g=Math.max(0,X.g+n);if(n>0){X.eg+=n;snd(900,.08,'triangle',.05)}$('#gm').textContent='◆ '+X.g+' gems'};
+const room=(id,n)=>{let c=0;for(let i=0;i<27;i++){const s=inv[i];c+=!s?64:s.id===id?64-s.n:0}return c>=n};
+const fi=(f,k)=>W.IT.findIndex(i=>(f&&i.fx===f)||(k&&i.kind===k));
+// ---- generic confirm dialog (Esc / outside click / Cancel all leave state untouched)
+function ask(t,p,ok,fn){X.cfn=fn;X.busy=0;$('#cft').textContent=t;$('#cfp').textContent=p;$('#cfo').textContent=ok;$('#cf').classList.remove('hide')}
+function askX(){X.cfn=0;$('#cf').classList.add('hide')}
+$('#cfc').onclick=askX;$('#cf').onclick=e=>{if(e.target.id==='cf')askX()};$('#cfo').onclick=()=>{if(X.busy||!X.cfn)return;X.busy=1;const f=X.cfn;askX();f()};
+addEventListener('keydown',e=>{if(X.cfn){e.stopImmediatePropagation();e.preventDefault();if(e.code==='Escape')askX()}},true);
+$('#clr').onclick=()=>ask('Clear your entire inventory?','This permanently deletes every item in your inventory, hotbar, crafting grid and the stack held on your cursor. Nothing is protected. Gems, quests and unlocks are NOT affected. This cannot be undone.','CLEAR INVENTORY',()=>{inv.fill(null);cgs.fill(null);cur=null;for(const k in armor)armor[k]=null;renderHB();rI();notify('Inventory and equipped armor cleared.')});
+// ---- delete worlds from the main menu
+const _lw=lw;lw=function(){_lw();document.querySelectorAll('#sv>button').forEach(b=>{const n=b.textContent.slice(2),d=document.createElement('button');d.textContent='🗑 Delete';d.title='Delete world '+n;d.style.borderColor='#e04a4a';d.onclick=()=>ask('Delete world "'+n+'"?','This permanently deletes the saved world, including terrain changes, inventory, gems and quest progress. This cannot be undone.','DELETE WORLD',()=>{try{localStorage.removeItem('cc:'+n)}catch(e){}lw()});b.after(d)})};
+// ---- UI states: shop / death / load layered onto the existing setUi
+const OV=['menu','pause','invp','jrn','end'],XO={shop:'#shp',death:'#dth',load:'#ldg'},_setUi=setUi;
+setUi=function(u){if(XO[u]){if(ui==='inv')retI();ui=u;for(const x of OV)$('#'+x).classList.add('hide');for(const k in XO)$(XO[k]).classList.toggle('hide',k!==u);$('#hud').classList.remove('hide');if(document.pointerLockElement)document.exitPointerLock();if(u==='shop')shopR();return}for(const k in XO)$(XO[k]).classList.add('hide');_setUi(u)};
+// ---- quests (every objective reads real game counters/events)
+const QD=[['fb','First Blood','Defeat 1 hostile creature (Hollow Guests and Clockwork Mites roam at night).',()=>[X.hk,1],10,0],
+['home','Make Yourself at Home','Place your bed (right-click on a block). It becomes your respawn point.',()=>[X.bed?1:0,1],15,'fb'],
+['mine','Rock Bottom','Mine 25 blocks.',()=>[mined,25],10,'home'],
+['fight','The World Fights Back','Defeat 6 hostile creatures in total.',()=>[X.hk,6],20,'home'],
+['mad','Mad Science','Combine items in the 2×2 crafting grid (E) to discover a recipe.',()=>[Object.keys(rec).length,1],12,'mine'],
+['portal','Call of the Portal','Discover the Portal Key recipe, then cross a portal into the Shattered Reach.',()=>[(rec[W.kk]?1:0)+(X.reach?1:0),2],30,'fight'],
+['harold','Hostile Takeover','Defeat Harold in the Shattered Reach.',()=>[won?1:0,1],60,'portal'],
+['lax','Gurgle Gurgle','Use the Laxative Sigil and defeat Laxative Dude.',()=>[laxWon?1:0,1],100,'harold']];
+const qp=q=>{const p=q[3]();return[Math.min(p[0],p[1]),p[1]]},qa=q=>!q[5]||X.qd[q[5]],QI={fight:()=>[fi('heal','heal'),3],mad:()=>[fi('food','food'),3],portal:()=>[fi(0,'shield'),1]};
+function claim(id){const q=QD.find(x=>x[0]===id);if(!q||X.qd[id]||!qa(q)||qp(q)[0]<qp(q)[1])return;const r=QI[id]&&QI[id]();if(r&&r[0]>0&&!room(r[0],r[1])){notify('Free an inventory slot to claim the item reward.');return}
+ X.qd[id]=1;gem(q[4]);if(r&&r[0]>0)addItem(r[0],r[1]);notify('Quest complete: '+q[1]+' · +'+q[4]+' gems');snd(660,.15,'triangle',.08);jr()}
+function qHTML(){let h=`<h3>Quests · ◆ ${X.g} gems</h3>`,hid=0;for(const q of QD){if(!qa(q)){hid++;continue}const[c,n]=qp(q),dn=c>=n,cl=X.qd[q[0]];h+=`<p>${cl?'✔':dn?'★':'•'} <b>${q[1]}</b> — ${q[2]} <i>(${c}/${n})</i> · reward ◆${q[4]}${QI[q[0]]?' + item':''} ${cl?'<small>(claimed)</small>':dn?`<button data-q="${q[0]}">Claim</button>`:''}</p>`}return h+(hid?`<p><small>${hid} more quest${hid>1?'s':''} unlock as you progress.</small></p>`:'')}
+const _jr=jr;jr=function(){_jr();const h=$('#jb');h.querySelector('h2').insertAdjacentHTML('afterend',qHTML());h.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>claim(b.dataset.q));const o=h.querySelector('h3:last-of-type');};
+const _rI=rI;rI=function(){_rI();$('#ct').textContent+=' · ◆ '+X.g+' gems'};
+let qt=0;function qTick(dt){if(dim===1)X.reach=1;qt-=dt;if(qt>0)return;qt=1;for(const q of QD)if(qa(q)&&!X.qd[q[0]]&&!X.nt[q[0]]){const[c,n]=qp(q);if(c>=n){X.nt[q[0]]=1;notify('Quest ready: '+q[1]+' — press J to claim ◆'+q[4]);snd(740,.12,'triangle',.07)}}}
+// ---- merchant (G): real world entity with cooldown, single-instance check and safe placement
+const MQ=['Gems, friend. Compliments do not spend.','Everything is for sale. Especially what I have not technically acquired.','I sell it, I do not insure it. Read the fine print, which I have not written.','Business is thriving. The world keeps ending and people keep needing supplies.'];
+const stock=()=>{const o=[['Healing item','Restores 10 health.',fi('heal','heal'),1,6],['Food','Restores 10 hunger (2 portions).',fi('food','food'),2,4],['Shield item','12 s of reduced damage.',fi(0,'shield'),1,14],['Bomb','Blasts terrain where you aim.',fi(0,'bomb'),1,16],['Freeze item','Freezes creatures within 10 blocks for 4 s.',fi(0,'freeze'),1,12],['Ammo ×16','Ammunition for ranged weapons.',W.ammoId,16,8]].map(a=>({n:a[0],d:a[1],id:a[2],q:a[3],p:a[4]}));
+ o.push({n:'Hint: odd drops',d:'Reveals a block in this world that drops something else (logged in your journal).',p:8,h:'drop'},{n:'Hint: living blocks',d:'Reveals a block with a special mining effect.',p:10,h:'fx'},{n:"Hint: Harold's weakness + key recipes",d:'Reveals the Portal Key recipe and the weapon that breaks Harold’s defense.',p:18,h:'bane'});
+ if(won&&!laxWon)o.push({n:'Laxative Sigil',d:'Replacement sigil; summons the pink portal. (Appears after Harold falls.)',id:W.laxKey,q:1,p:30},{n:'Hint: Laxative Dude + Sigil recipe',d:'Reveals when he is vulnerable and how to craft the pink-portal key.',p:12,h:'lax'});return o.filter(s=>s.h||s.id>0)};
+function hint(h){const I=W.IT;if(h==='drop'||h==='fx'){const ks=Object.keys(W.dp).filter(b=>h==='drop'?W.dp[b][0]!=b:W.fx[b]).sort((a,b)=>hash(a,0,0,S)-hash(b,0,0,S)),k=ks.find(b=>!obs[(h==='drop'?'d':'f')+b]);if(!k)return 0;if(h==='drop')obs['d'+k]=`${I[k].n} drops ${I[W.dp[k][0]].n} ×${W.dp[k][1]}`;else obs['f'+k]=`Mining ${I[k].n} ${FXB[W.fx[k]]}`;return 1}
+ if(h==='bane'){obs.hb=`Harold's last phase: only the ${I[W.bane].n} hurts him.`;return 1}if(h==='lax'){obs.hl='Laxative Dude can only be hurt while his head is out (about 5 s). He glows brown just before firing.';return 1}return 0}
+const line=t=>{X.sl=t;const e=$('#shl');if(e)e.textContent=t};
+function buy(s){if(X.g<s.p)return line('Gems, friend. Compliments do not spend.');
+ if(s.h){if(X.hint[s.h]&&(s.h==='bane'||s.h==='lax'))return;if(!hint(s.h))return line('I have nothing left to tell you on that subject. Remarkable, really.');X.hint[s.h]=1;line('Written in your journal. Do not say who told you.')}
+ else{if(!room(s.id,s.q))return line('Your pack is full. I refuse to sell what you cannot carry.');addItem(s.id,s.q);line('Pleasure doing business.')}gem(-s.p);shopR()}
+function shopR(){const b=$('#shb');if(!X.sl)X.sl=MQ[Math.random()*MQ.length|0];b.innerHTML=`<h2>Wandering Merchant</h2><p><i id="shl">${X.sl}</i></p><p>◆ <b>${X.g}</b> gems</p>`;
+ for(const s of stock()){if(s.h&&X.hint[s.h]&&(s.h==='bane'||s.h==='lax'))continue;const p=document.createElement('p'),bt=document.createElement('button');bt.textContent='Buy ◆'+s.p;bt.disabled=X.g<s.p;bt.onclick=()=>buy(s);p.innerHTML=`<b>${s.n}</b>${s.id>0?' ('+W.IT[s.id].n+')':''} — ${s.d} `;p.append(bt);b.append(p)}
+ const c=document.createElement('button');c.textContent='Leave';c.onclick=()=>setUi('play');b.append(c)}
+function safeSpot(){const fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw);for(let i=0;i<40;i++){const a=(i%2?1:-1)*Math.floor(i/2)*.35,r=3+(i>>3),x=Math.floor(P.p.x+(fx*Math.cos(a)-fz*Math.sin(a))*r),z=Math.floor(P.p.z+(fx*Math.sin(a)+fz*Math.cos(a))*r),y=topY(x,z);
+ if(y>0&&Math.abs(y-P.p.y)<=3&&gb(x,y,z)===0&&gb(x,y+1,z)===0&&gb(x,y+2,z)===0&&gb(x,y-1,z)>0&&gb(x,y-1,z)!==8&&[[1,0],[-1,0],[0,1],[0,-1]].every(([p,q])=>{const t=topY(x+p,z+q);return t>0&&Math.abs(t-y)<=2}))return[x+.5,y,z+.5]}return null}
+function summonM(){if(ui!=='play')return;if(dim){notify('The merchant refuses to enter boss realms.');return}if(X.m){notify('The merchant is already nearby — walk up and press F.');return}if(X.mcd>0){notify('The merchant is catching their breath ('+Math.ceil(X.mcd)+'s).');return}const s=safeSpot();if(!s){notify('No safe ground nearby. Stand on flat land and try again.');return}
+ const g=new THREE.Group(),B=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:c}));m.position.set(x,y,z);g.add(m);return m};
+ B(.8,1.1,.5,0x6a2d8f,0,.65,0);const hd=B(.5,.5,.5,0xe3b98f,0,1.45,0);B(.8,.1,.8,0x3a1a5a,0,1.75,0);B(.45,.45,.45,0x3a1a5a,0,2,0);B(.55,.7,.3,0x8a5a2a,0,.85,.4);const orb=B(.26,.26,.26,0xffd24a,.62,1,-.1);orb.material.emissive.setHex(0xaa8000);
+ const bm=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,7,12,1,true),new THREE.MeshBasicMaterial({color:0xb18cff,transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide}));bm.position.y=3.5;g.add(bm);
+ g.position.set(s[0],s[1],s[2]);g.scale.setScalar(.01);sc.add(g);X.m={g,hd,orb,bm,p:new V3(s[0],s[1],s[2]),age:0};X.mcd=20;X.sl='';puff(s[0],s[1]+1,s[2],0xb18cff);snd(300,.5,'sine',.1);setTimeout(()=>snd(600,.3,'triangle',.08),200);notify('A merchant blinks into existence nearby. Walk up and press F to trade.')}
+function goM(q){const m=X.m;if(!m)return;if(!q)puff(m.p.x,m.p.y+1,m.p.z,0xb18cff);sc.remove(m.g);m.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});X.m=null;if(ui==='shop')setUi('play')}
+function mTick(dt){const m=X.m;if(!m)return;m.age+=dt;m.g.scale.setScalar(.01+Math.min(1,m.age/.7)*.99);m.bm.material.opacity=Math.max(0,.5-m.age*.4);m.bm.visible=m.bm.material.opacity>0;m.g.rotation.y=Math.atan2(P.p.x-m.p.x,P.p.z-m.p.z);m.orb.position.y=1+Math.sin(m.age*3)*.12;m.hd.rotation.z=Math.sin(m.age*2)*.08;if(dim||m.age>180||Math.hypot(P.p.x-m.p.x,P.p.z-m.p.z)>70)goM()}
+addEventListener('keydown',e=>{if(e.repeat)return;if(ui==='play'){if(e.code==='KeyG')summonM();else if(e.code==='KeyF'&&X.m&&Math.hypot(P.p.x-X.m.p.x,P.p.z-X.m.p.z)<3.6)setUi('shop')}else if(ui==='shop'&&['Escape','KeyF','KeyG'].includes(e.code))setUi('play')});
+// ---- damage feedback: scaled shake, directional arrow, vignette, recoil; causes of death
+function nearSrc(){let b=null,bd=12;for(const e of ents)if(!e.dead&&(HOS.includes(e.t)||e.t==='H'||e.t==='L')){const d=Math.hypot(e.p.x-P.p.x,e.p.z-P.p.z);if(d<bd){bd=d;b=e}}for(const s of shots)if(s.owner==='enemy'){const d=Math.hypot(s.p.x-P.p.x,s.p.z-P.p.z);if(d<bd){bd=d;b={p:s.p,t:'proj'}}}return b}
+function feel(d){const k=cl(d/9,.12,1),s=nearSrc(),dm=$('#dm');X.cause=s?(s.t==='proj'?'Hit by a projectile':'Slain by '+SP[s.t].n):(P.t-X.ex<.4?'Caught in an explosion':'Fall damage');SH.a=Math.max(SH.a,k*.1*ST.sh);dm.style.opacity=ST.vg?cl(.3+k*.6,.3,.9):0;
+ if(ST.vg){setTimeout(()=>dm.style.opacity=cl(.2+k*.35,.2,.55),170);setTimeout(()=>dm.style.opacity=0,500+k*600)}snd(95-k*40,.1+k*.2,'triangle',.05+k*.09);
+ if(s){const dx=s.p.x-P.p.x,dz=s.p.z-P.p.z,L=Math.hypot(dx,dz)||1,sy=Math.sin(P.yaw),cy=Math.cos(P.yaw),di=$('#di');di.style.transform=`rotate(${Math.atan2((dx*cy-dz*sy)/L,(-dx*sy-dz*cy)/L)*57.3}deg)`;di.style.opacity=1;clearTimeout(di._t);di._t=setTimeout(()=>di.style.opacity=0,800);P.v.x-=dx/L*k*3;P.v.z-=dz/L*k*3}}
+const _hp=hurtP;hurtP=function(d){const h=P.hp;_hp(d);if(P.hp<h){if(P.hp<=0)P.hp=-1;feel(h-P.hp)}};const _boom=boom;boom=function(...a){X.ex=P.t;return _boom(...a)};
+const _ren=ren;ren=function(dt){const r=cam.rotation,x0=r.x,z0=r.z;if(SH.a>.0004){r.x+=(Math.random()-.5)*SH.a;r.z+=(Math.random()-.5)*SH.a*1.5;SH.a*=Math.exp(-dt*10)}else SH.a=0;_ren(dt);r.x=x0;r.z=z0};
+// ---- boss voices: Harold (rhetoric tied to real events) and Laxative Dude (gurgles)
+const HL={meet:['Ah, at last. Someone willing to enter this world without demanding that it explain itself. I respect that. Unfortunately, your arrival presents a serious administrative complication.','Do come in. Mind the floating masonry; it is a legacy of the previous administration, which I was obliged to dissolve.'],again:['Back so soon? Persistence is admirable. It is also, in your case, unproductive.','Ah, the constituent returns. Let us pretend your last visit was a clerical error.'],
+p2:['You mistake resistance for victory. I have survived rebellions, revolutions, and considerably more competent opponents. Do try to make this interesting.','Observe how calm I remain. That is the difference between governing and flailing.'],p3:['Very well. When the rules obstruct progress, one amends the rules. Retroactively.','Gravity, like any institution, serves at my pleasure.'],
+low:['Let us be reasonable. Surely we can negotiate a mutually beneficial arrangement in which you stop striking me with that ridiculous object.','I am prepared to offer a generous settlement. Terms to be determined, naturally, by me.'],p4:['This is not a defeat. It is a temporary reduction in my approval rating.','Everything you achieve here, I shall describe in my memoirs as a minor procedural delay.'],
+atk:['A modest correction to your position.','Nothing personal. Merely policy.','I did warn you about the paperwork.','You will find my footwork persuasive.'],kill:['A tragic outcome, and an entirely foreseeable one. I shall have the record amended to say you were brave.','Another volunteer, another statistic. Do read the terms of engagement next time.'],
+defeat:['You may celebrate this outcome. You may even call it progress. But I assure you, you have merely inherited a problem that you are profoundly unqualified to solve.']};
+const LV={idle:['BLRRGH... glug-glug-GRRRBL!','GLOOOORP... brrrblblbl!'],notice:['HRRRGH! GURR-GURR-GLOOP!','GLRRK?! ...BLOOOORP!'],hit:['BLRP! glrk-glrk!','GURRGH!! blbl-blbl!'],prep:['GLOOOORP... GLORP... GLURRRRGH!','brrrBLBLBLBL—'],phase:['BLOOOORP... glrk... GLURRRRGH!','HRRRGH... GLOP-GLOP-GLUUURB!'],death:['GLRRRRRRB... bl... b... *pop*']};
+function say(w,k){const a=(w==='H'?HL:LV)[k];if(!a)return'';let i=Math.random()*a.length|0;if(a.length>1&&i===SL[w+k])i=(i+1)%a.length;SL[w+k]=i;const el=$('#sp');el.className='';el.innerHTML=`<b style="color:${w==='H'?'#d9c08a':'#ff7fc2'}">${w==='H'?'HAROLD':'LAXATIVE DUDE'}</b><span${w==='H'?'':' style="font-style:italic;letter-spacing:.05em"'}>${a[i]}</span>`;clearTimeout(SL.t);SL.t=setTimeout(()=>el.className='hide',2800+a[i].length*38);return a[i]}
+function vox(k){try{AC=AC||new AudioContext();const n=AC.currentTime,p={idle:[110,70,.5,12],notice:[160,90,.45,18],hit:[210,100,.25,24],prep:[90,200,.9,9],phase:[140,55,1.1,14],death:[180,35,1.8,10]}[k]||[110,70,.4,12],o=AC.createOscillator(),l=AC.createOscillator(),lg=AC.createGain(),g=AC.createGain();o.type='sawtooth';o.frequency.setValueAtTime(p[0],n);o.frequency.exponentialRampToValueAtTime(p[1],n+p[2]);l.frequency.value=p[3];lg.gain.value=.05;l.connect(lg);lg.connect(g.gain);g.gain.setValueAtTime(.07,n);g.gain.exponentialRampToValueAtTime(.0001,n+p[2]);o.connect(g);g.connect(AC.destination);o.start(n);l.start(n);o.stop(n+p[2]);l.stop(n+p[2])}catch(e){}}
+function bTick(){const H=ents.find(e=>e.t==='H'&&!e.dead),L=ents.find(e=>e.t==='L'&&!e.dead);let h=X.h,l=X.l;
+ if(H){if(H.id!==h.id){h.id=H.id;h.pz=1;h.low=0;h.a=0;h.nx=P.t+8;say('H',h.met?'again':'meet');h.met=1}else{if(H.pz>h.pz){h.pz=H.pz;say('H','p'+H.pz)}if(!h.low&&H.hp/H.mx<.25&&H.pz<4){h.low=1;say('H','low')}const a=H.wu>0||H.sw>0||H.tw>0;if(a&&!h.a&&P.t>h.nx){h.nx=P.t+9;say('H','atk')}h.a=a}}
+ if(L){if(L.id!==l.id){X.l=l={id:L.id,hp:L.hp,nx:P.t+6,hit:0,ho:L.headOut,pr:0};vox('notice');say('L','notice')}if(L.hp<l.hp-.01&&P.t>l.hit){vox('hit');say('L','hit');l.hit=P.t+.8}l.hp=L.hp;if(L.headOut&&!l.ho){vox('phase');say('L','phase')}l.ho=L.headOut;const pr=L.shotCd<.55;if(pr&&!l.pr){vox('prep');say('L','prep')}l.pr=pr;if(pr)for(const m of L.ms)m.emissive.setHex(0x8a4a00);if(P.t>l.nx){l.nx=P.t+6+Math.random()*5;vox('idle');say('L','idle')}}}
+const _ke=ke;ke=function(e){if(e.dead)return;_ke(e);if(HOS.includes(e.t)){X.hk++;gem(GV[e.t])}if(e.t==='H'){const t=say('H','defeat');setTimeout(()=>{if(ui==='end')$('#eb').insertAdjacentHTML('afterbegin',`<p><i>Harold: “${t}”</i></p>`)},1000)}if(e.t==='L'){vox('death');say('L','death')}};
+// ---- death screen, respawn rules
+die=function(){if(X.dead)return;X.dead=1;mb[0]=mb[2]=0;if(P.p.y<-30)X.cause='Fell into the void';else if(P.hg<=0&&!X.cause)X.cause='Starved to death';let lost=0;inv.forEach((s,i)=>{if(s){const k=s.n>>1;lost+=s.n-k;if(k)s.n=k;else inv[i]=null}});const hl=ents.some(e=>e.t==='H'&&!e.dead)?say('H','kill'):'',sv=(()=>{try{return!!localStorage['cc:'+wname]}catch(e){return false}})();
+ $('#dtb').innerHTML=`<h1 style="color:#e04a4a">YOU DIED</h1><p><b>${X.cause||'Cause unknown'}</b></p><p>Time survived: ${fmt(X.t)} · Enemies defeated: ${kills-X.k0} · Gems earned this run: ◆${X.eg-X.g0}</p><p>Death penalty: you lost half of every item stack (${lost} item${lost===1?'':'s'}). Gems, quests and unlocks are safe.</p>${hl?`<p><i>Harold: “${hl}”</i></p>`:''}<p>You will respawn ${X.spawn?'beside your bed':'at the world origin (place a bed to set a spawn point)'}.</p><button id="rsp">Respawn</button><button id="ttl">Title screen</button><button id="rld"${sv?'':' disabled'}>Reload last save</button>`;
+ $('#rsp').onclick=respawn;$('#ttl').onclick=()=>{X.dead=0;goM(1);unload();clearProps();W=null;setUi('menu');lw()};$('#rld').onclick=()=>{try{const o=JSON.parse(localStorage['cc:'+wname]);start(wname,o.s,o.ri,o.df,o)}catch(e){$('#rld').textContent='No valid save'}};setUi('death')};
+function respawn(){if(!X.dead)return;X.dead=0;X.cause='';P.hp=P.hg=20;P.inv=2;P.v.set(0,0,0);bf.jump=bf.float=bf.speed=bf.gv=bf.shield=0;mn=null;ret=X.spawn?X.spawn.slice():null;warp(0);for(let i=0;i<60&&hitB(P.p.x,P.p.y,P.p.z,P.w,P.h);i++)P.p.y+=1;X.k0=kills;X.g0=X.eg;X.t=0;renderHB();setUi('play');notify(X.spawn?'You wake beside your bed.':'You respawn at the world origin. Place a bed to set a spawn point.')}
+const _pb=placeBed;placeBed=function(x,y,z){_pb(x,y,z);X.bed=1;X.spawn=[x+.5,y,z+.5];notify('Bed placed — this is now your respawn point.')};
+// ---- save versioning + validation
+function vs(o){o=Object.assign({},o);o.s=num(o.s,1)|0;o.ri=num(o.ri,.55);o.df=num(o.df,1)||1;const n=mkWorld(o.s,o.ri).IT.length;o.dim=[0,1,2].includes(o.dim)?o.dim:0;o.hp=cl(num(o.hp,20),1,20);o.hg=cl(num(o.hg,20),0,20);
+ if(!Array.isArray(o.p)||o.p.length<3||!o.p.slice(0,3).every(Number.isFinite)){o.p=[.5,CH-3,.5];o.dim=0}else o.p=o.p.slice(0,3);
+ o.inv=Array.isArray(o.inv)?Array.from({length:27},(_,i)=>{const s=o.inv[i];return s&&Number.isInteger(s.id)&&s.id>0&&s.id<n&&s.n>0?{id:s.id,n:Math.min(64,s.n|0)}:null}):null;for(const k of['rec','obs','mods'])if(!o[k]||typeof o[k]!=='object')o[k]={};
+ o.beds=Array.isArray(o.beds)?o.beds.filter(b=>Array.isArray(b)&&b.length>=3&&b.every(Number.isFinite)):[];o.won=o.won?1:0;o.laxWon=o.laxWon?1:0;o.tod=num(o.tod,.3);o.yaw=num(o.yaw,0);return o}
+function loadX(x){if(!x||typeof x!=='object')return;X.g=Math.max(0,num(x.g,0)|0);X.eg=Math.max(0,num(x.eg,X.g)|0);for(const q of QD)if(x.qd&&x.qd[q[0]]===1){X.qd[q[0]]=1;X.nt[q[0]]=1}X.hk=Math.max(0,num(x.hk,0)|0);X.bed=x.bed?1:0;if(Array.isArray(x.spawn)&&x.spawn.length===3&&x.spawn.every(Number.isFinite))X.spawn=x.spawn;X.reach=x.reach?1:0;if(x.hint&&typeof x.hint==='object')for(const k of['drop','fx','bane','lax'])if(x.hint[k])X.hint[k]=1}
+const _sv=save;save=function(){if(!W||X.dead)return;_sv();try{const k='cc:'+wname,o=JSON.parse(localStorage[k]);o.v=2;o.x={g:X.g,eg:X.eg,qd:X.qd,hk:X.hk,bed:X.bed,spawn:X.spawn,reach:X.reach,hint:X.hint};localStorage[k]=JSON.stringify(o)}catch(e){}};
+const _start=start;start=function(name,seed,ri,df,o){if(X.m)goM(1);xr();if(o){o=vs(o);seed=o.s;ri=o.ri;df=o.df}_start(name,seed,ri,df,o);if(o&&o.x)loadX(o.x);for(let i=0;i<60&&hitB(P.p.x,P.p.y,P.p.z,P.w,P.h);i++)P.p.y+=1;X.k0=kills;X.g0=X.eg;gem(0);loadScreen()};
+// ---- loading screen: progress = real chunks generated + meshed
+const TIPS=['Mining can do strange things. The journal records what you learn.','Press G to call a merchant — gems only.','Hollow Guests only move while you are not looking at them.','Beds set your respawn point.','The merchant sells hints about Harold.'];
+function loadScreen(){setUi('load');const need=(2*RD+1)**2,b=$('#ldb'),pc=$('#ldp'),tk=$('#ldk'),en=$('#lde');en.disabled=true;$('#ldh').textContent='Tip: '+TIPS[Math.random()*TIPS.length|0];let it=0;
+ const stp=()=>{if(ui!=='load'||!W)return;stream(RD,6,10);let d=0;for(const c of ch.values())if(!c.dirty)d++;const f=Math.min(1,d/need);b.style.width=f*100+'%';pc.textContent=(f*100|0)+'%';tk.textContent=ch.size<need?`Generating terrain… ${ch.size}/${need} chunks`:`Building chunk meshes… ${d}/${need}`;if(f>=1||++it>500){b.style.width='100%';pc.textContent='100%';tk.textContent='World ready';en.disabled=false;en.focus();return}setTimeout(stp,0)};stp()}
+$('#lde').onclick=()=>{if(ui==='load')setUi('play')};
+// ---- graphics presets and options
+const GF={Low:[3,1],Medium:[5,1.25],High:[5,1.5],Ultra:[7,2]};
+function gfx(n){const g=GF[n]||GF.Medium;RD=g[0];$('#rd').value=g[0];R.setPixelRatio(Math.min(devicePixelRatio,g[1]));rs();ST.gf=n;svS()}
+$('#gq').onchange=e=>gfx(e.target.value);$('#shk').onchange=e=>{ST.sh=+e.target.value;svS()};$('#vgn').onchange=e=>{ST.vg=e.target.checked?1:0;svS()};$('#gq').value=ST.gf;$('#shk').value=String(ST.sh);$('#vgn').checked=!!ST.vg;gfx(ST.gf);
+// ---- per-frame hook
+const _upd=upd;upd=function(dt){X.t+=dt;X.mcd=Math.max(0,X.mcd-dt);_upd(dt);qTick(dt);mTick(dt);bTick()};
+Object.assign(window.CC,{getX:()=>X,QD,qp,qa,stock,buy,claim,room,vs,loadX,summonM,respawn,hint,feel,ask,askX,gfx});
+
+// ===== CHAOSCRAFT progression update: coherent item names, fixed recipes, armor, fluffballs, persistent quest log =====
+// Armor is real equipment: these slots reduce incoming damage and are stored with the world save.
+let armor={helmet:null,chest:null,legs:null,boots:null};
+const emptyArmor=()=>({helmet:null,chest:null,legs:null,boots:null});
+
+// Stable names replace random adjective+noun combinations that did not match how an item worked.
+const _mkWorldProgression=mkWorld;
+mkWorld=function(seed,ri){
+ const v=_mkWorldProgression(seed,ri),counts={};
+ const effectNames={heal:'Healing Salve',food:'Trail Ration',jump:'Spring Tonic',float:'Feather Charm',speed:'Swift Tonic',boom:'Blast Charge',smite:'Storm Rod',launch:'Updraft Charm',key:'Portal Key',bane:"Harold's Sealbreaker"};
+ const kindNames={
+  ranged:['Hunting Bow','Recurve Bow','Composite Bow','Crossbow'],bow:['Hunting Bow','Recurve Bow','Composite Bow','Crossbow'],
+  ammo:['Arrow','Fletched Arrow','Iron Arrow'],melee:['Wooden Sword','Stone Sword','Iron Sword','Steel Sword'],
+  bed:['Bedroll','Camp Bed','Field Bed'],heal:['Bandage','Healing Potion','Healing Salve'],food:['Cooked Meat','Trail Ration','Berry Stew'],
+  boom:['Blast Charge','Bomb','Firebomb'],speed:['Swift Boots','Running Tonic'],jump:['Spring Boots','Jump Tonic'],
+  shield:['Buckler','Shield Charm','Ward Potion'],summon:['Calling Horn','Creature Lure'],lure:['Creature Lure','Bait Pouch'],
+  teleport:['Recall Charm','Teleport Stone'],freeze:['Frost Bomb','Frost Charm'],gravity:['Gravity Orb'],light:['Flare','Lantern'],
+  spear:['Wooden Spear','Stone Spear','Iron Spear'],bomb:['Bomb','Blast Charge'],web:['Web Trap','Sticky Bomb']
+ };
+ for(let i=BL.length;i<v.laxKey;i++){
+  const it=v.IT[i]; if(!it)continue;
+  if(it.fx&&effectNames[it.fx]){it.n=effectNames[it.fx];continue;}
+  let k=it.kind||''; if(k==='ranged')k='bow';
+  if(k==='bow')it.kind='bow';
+  const a=kindNames[k]; if(a){const n=counts[k]||0;it.n=a[n%a.length];counts[k]=n+1;}
+ }
+ v.IT[v.laxKey].n='Laxative Sigil';v.IT[v.laxKey].kind='laxsigil';v.IT[v.laxKey].fx=0;v.IT[v.laxKey].d=0;
+ v.IT[v.key].n='Portal Key';v.IT[v.key].kind='key';v.IT[v.key].fx='key';v.IT[v.key].d=0;v.IT[v.key].c=0xffbd42;
+ v.IT[v.bane].n="Harold's Sealbreaker";v.IT[v.bane].kind='melee';v.IT[v.bane].fx='bane';v.IT[v.bane].d=40;v.IT[v.bane].c=0x6ff2e0;
+ const push=(n,c,d,kind,extra={})=>{const id=v.IT.length;v.IT.push(Object.assign({n,c,d,blk:false,kind,fx:0},extra));return id;};
+ v.fluffId=push('Fluff',0xf0edf0,0,'material');
+ v.bedId=push('Bed',0x4c9edb,0,'bed');
+ v.rangedId=push("Hunter's Bow",0x9a6b3c,7,'bow');
+ v.ammoId=push('Arrow',0xd8d8d8,6,'ammo');
+ v.pickaxeId=push('Stone Pickaxe',0x858b96,8,'tool');
+ v.armorIds={
+  hood:push('Padded Hood',0xded8ca,0,'armor',{slot:'helmet',defense:.05}),
+  tunic:push('Padded Tunic',0xb8a17c,0,'armor',{slot:'chest',defense:.09}),
+  leggings:push('Padded Leggings',0x93836c,0,'armor',{slot:'legs',defense:.07}),
+  boots:push('Padded Boots',0x70543e,0,'armor',{slot:'boots',defense:.05}),
+  crystalHelmet:push('Glimmer Helmet',0x62e6cc,0,'armor',{slot:'helmet',defense:.09}),
+  crystalChest:push('Glimmer Chestplate',0x4bc6b1,0,'armor',{slot:'chest',defense:.14}),
+  crystalLegs:push('Glimmer Leggings',0x3e9f91,0,'armor',{slot:'legs',defense:.11}),
+  crystalBoots:push('Glimmer Boots',0x2a7e78,0,'armor',{slot:'boots',defense:.08})
+ };
+ v.coreId=push("Harold's Core",0xb9a0ff,0,'material');
+ // Fixed, understandable progression recipes. Ingredients are placed in separate cells of the 2×2 grid.
+ v.kk=[5,6].sort((a,b)=>a-b).join(','); // Log + Leaves -> Portal Key
+ v.kb=[3,9].sort((a,b)=>a-b).join(','); // Stone + Glimmer -> Harold's Sealbreaker
+ v.hs={a:[5,6],b:[3,9]};
+ v.recipeBook={};
+ const recipe=(ids,out,qty=1,condition=()=>true)=>{const key=ids.slice().sort((a,b)=>a-b).join(',');v.recipeBook[key]={out,qty,condition};};
+ recipe([5,6],v.key);
+ recipe([5,5],10,4); // two Logs -> four Planks
+ recipe([5,3],v.pickaxeId);
+ recipe([v.fluffId,5],v.bedId);
+ recipe([v.fluffId,6],v.armorIds.hood);
+ recipe([v.fluffId,10],v.armorIds.tunic);
+ recipe([v.fluffId,3],v.armorIds.leggings);
+ recipe([v.fluffId,4],v.armorIds.boots);
+ recipe([3,9],v.bane);
+ recipe([v.armorIds.hood,9],v.armorIds.crystalHelmet);
+ recipe([v.armorIds.tunic,9],v.armorIds.crystalChest);
+ recipe([v.armorIds.leggings,9],v.armorIds.crystalLegs);
+ recipe([v.armorIds.boots,9],v.armorIds.crystalBoots);
+ recipe([v.coreId,9],v.laxKey,1,()=>!!won);
+ v.loot.fluffball=v.fluffId;
+ return v;
+};
+
+// Add a passive, round, fluffy creature. It wanders, rolls, and drops three Fluff when defeated.
+SP.fluffball={s:[.95,.9,.95],c:0xe7e3df,c2:0xf9f5f0,hp:9,sp:2.5,dm:0,n:'Fluffball'};
+const _spawnProgression=spawn;
+spawn=function(t,x,y,z){
+ if(t==='grazer'&&dim===0&&Math.random()<.42)t='fluffball';
+ const e=_spawnProgression(t,x,y,z);
+ if(e&&t==='fluffball'){
+  e.body.geometry.dispose();e.body.geometry=new THREE.IcosahedronGeometry(.55,1);e.body.scale.set(1.05,.78,1.02);e.body.position.set(0,.42,0);
+  e.head.visible=false;e.l1.visible=false;e.l2.visible=false;
+  const fur=new THREE.MeshLambertMaterial({color:0xf7f3ee});e.ms.push(fur);
+  for(let i=0;i<13;i++){const a=i*2.39996,r=.25+(i%3)*.075,y=.23+(i%4)*.11,m=new THREE.Mesh(new THREE.SphereGeometry(.16+(i%3)*.025,6,5),fur);m.position.set(Math.cos(a)*r,y,Math.sin(a)*r);e.m.add(m);}
+ }
+ return e;
+};
+
+// Only exact recipes work; random combinations no longer produce unrelated items.
+rcp=function(ids){
+ if(!W)return null;const a=ids.filter(i=>Number.isInteger(i)&&i>0).sort((x,y)=>x-y);if(!a.length)return null;
+ const k=a.join(',');if(k===W.kk)return[W.key,1,k];if(k===W.kb)return[W.bane,1,k];
+ const r=W.recipeBook&&W.recipeBook[k];if(!r||!r.condition())return null;return[r.out,r.qty,k];
+};
+
+// A bow consumes real arrows. Clicking an armor item equips it; clicking its slot puts it back in the pack.
+firePlayer=function(it){
+ let arrowSlot=-1;
+ if(it.kind==='bow'){
+  arrowSlot=inv.findIndex((s,i)=>i!==sel&&s&&s.id===W.ammoId&&s.n>0);
+  if(arrowSlot<0){notify('No arrows left. Craft or buy more arrows.');return;}
+ }
+ const d=new V3(0,0,-1).applyQuaternion(cam.quaternion),start=cam.position.clone().addScaledVector(d,.65);
+ shootProjectile(start,d.multiplyScalar(it.kind==='spear'?22:it.kind==='ammo'?13:25),it.c,it.d,'player',it.kind==='ammo'?2.6:4);
+ snd(it.kind==='bow'?420:it.kind==='spear'?185:330,.07,'triangle',.045);
+ if(it.kind==='ammo')dec(sel);else if(it.kind==='bow'&&arrowSlot>=0){if(!--inv[arrowSlot].n)inv[arrowSlot]=null;renderHB();}
+};
+function equipArmorAt(i){
+ const s=inv[i];if(!s||!W.IT[s.id]||W.IT[s.id].kind!=='armor')return false;
+ const it=W.IT[s.id],slot=it.slot;if(!slot||!(slot in armor))return false;const old=armor[slot],newId=s.id;
+ if(old&&s.n>1&&!room(old.id,1)){notify('Your pack is full. Make room before swapping that armor.');return true;}
+ if(old){if(s.n===1)inv[i]={id:old.id,n:1};else{s.n--;addItem(old.id,1);}}
+ else if(s.n===1)inv[i]=null;else s.n--;
+ armor[slot]={id:newId,n:1};notify('Equipped '+it.n+' · '+Math.round(it.defense*100)+'% damage reduction.');renderHB();rI();return true;
+}
+function unequipArmor(slot){const s=armor[slot];if(!s)return;if(!room(s.id,1)){notify('Your pack is full. Make room before removing armor.');return;}armor[slot]=null;addItem(s.id,1);renderHB();rI();}
+const _clkProgression=clk;
+clk=function(i){const s=inv[i];if(!cur&&s&&W.IT[s.id]&&W.IT[s.id].kind==='armor'){equipArmorAt(i);return;}_clkProgression(i);};
+const _useProgression=use;
+use=function(){const s=inv[sel];if(!s)return;const it=W.IT[s.id];if(it.kind==='armor'){equipArmorAt(sel);return;}if(it.kind==='material'||it.kind==='tool'){notify(it.n+' is used in crafting. Open the crafting grid with E.');return;}_useProgression();};
+const _rIProgression=rI;
+rI=function(){_rIProgression();if(!W)return;const iv=$('#iv'),panel=document.createElement('div');panel.className='armor-panel';
+ panel.innerHTML='<h3>Armor slots</h3><p>Click armor in your inventory to equip it. Click an equipped piece to remove it.</p>';
+ const grid=document.createElement('div');grid.className='armor-grid';
+ const slots=[['helmet','Head'],['chest','Chest'],['legs','Legs'],['boots','Feet']];
+ for(const [key,label] of slots){const box=document.createElement('div');box.className='armor-slot';const cap=document.createElement('small');cap.textContent=label;box.appendChild(cap);const item=sl(armor[key],()=>unequipArmor(key));item.title=armor[key]?W.IT[armor[key].id].n+' · '+Math.round((W.IT[armor[key].id].defense||0)*100)+'% defense':'Empty '+label+' slot';box.appendChild(item);grid.appendChild(box);}
+ panel.appendChild(grid);const defense=Object.values(armor).reduce((n,s)=>n+(s&&W.IT[s.id]?W.IT[s.id].defense||0:0),0);const sum=document.createElement('div');sum.className='armor-summary';sum.textContent='Total armor: '+Math.round(Math.min(.55,defense)*100)+'% reduced incoming damage.';panel.appendChild(sum);iv.appendChild(panel);
+};
+
+// Apply armor defense before the original damage feedback, so both health and feedback use the reduced hit.
+const _hurtBeforeArmor=hurtP;
+hurtP=function(d){const reduction=Math.min(.55,Object.values(armor).reduce((n,s)=>n+(s&&W&&W.IT[s.id]?W.IT[s.id].defense||0:0),0));_hurtBeforeArmor(d*(1-reduction));};
+
+// Journal view separates active, ready-to-claim, and completed quests. Claimed quests are never filtered by prerequisites.
+qHTML=function(){
+ const ready=[],active=[],done=[],locked=[];
+ for(const q of QD){const[c,n]=qp(q),claimed=!!X.qd[q[0]],isReady=c>=n;if(claimed)done.push(q);else if(!qa(q))locked.push(q);else if(isReady)ready.push(q);else active.push(q);}
+ const line=(q,kind)=>{const[c,n]=qp(q),claimed=!!X.qd[q[0]];return `<p>${claimed?'✔':kind==='ready'?'★':'•'} <b>${q[1]}</b> — ${q[2]} <i>(${c}/${n})</i> · reward ◆${q[4]} ${claimed?'<small>(claimed)</small>':kind==='ready'?`<button data-q="${q[0]}">Claim</button>`:''}</p>`;};
+ let h=`<h3>Quests · ◆ ${X.g} gems</h3><p><small>Completed quests stay in this journal for this world, even after later objectives unlock.</small></p>`;
+ h+='<h3>Ready to claim</h3>'+(ready.map(q=>line(q,'ready')).join('')||'<p>Nothing ready yet.</p>');
+ h+='<h3>Current objectives</h3>'+(active.map(q=>line(q,'active')).join('')||'<p>No active objectives.</p>');
+ h+='<h3>Completed quests</h3>'+(done.map(q=>line(q,'done')).join('')||'<p>No quests claimed yet.</p>');
+ h+='<h3>Locked objectives</h3>'+(locked.map(q=>`<p class="muted-quest">🔒 <b>${q[1]}</b> — unlocks after ${QD.find(p=>p[0]===q[5])?.[1]||'earlier progress'}</p>`).join('')||'<p>All objectives are unlocked.</p>');
+ return h;
+};
+// Add a useful armor objective to the quest chain.
+if(!QD.some(q=>q[0]==='armor'))QD.splice(5,0,['armor','Dress for the Fight','Craft and equip at least one piece of armor.',()=>[Object.values(armor).some(Boolean)?1:0,1],15,'mad']);
+
+const _jrProgression=jr;
+jr=function(){_jrProgression();const h=$('#jb'),b=h.querySelector('#jc');if(b)b.insertAdjacentHTML('beforebegin',`<h3>Crafting guide</h3><p>2 Logs → 4 Planks</p><p>Log + Fluff → Bed</p><p>Fluff + Leaves → Padded Hood</p><p>Fluff + Planks → Padded Tunic</p><p>Fluff + Stone → Padded Leggings</p><p>Fluff + Sand → Padded Boots</p><p>Padded armor + Glimmer → upgraded armor</p><p>Log + Leaves → Portal Key</p><p>Stone + Glimmer → Harold's Sealbreaker</p><p>After Harold: Harold's Core + Glimmer → Laxative Sigil</p>`);};
+
+const _hintProgression=hint;
+hint=function(h){const ok=_hintProgression(h);if(!ok||!W)return ok;
+ if(h==='bane')obs.hb="Harold's final phase rejects ordinary weapons. Craft Harold's Sealbreaker from Stone + Glimmer. Craft the Portal Key from Log + Leaves to open his portal.";
+ if(h==='lax')obs.hl="Laxative Dude's head is vulnerable only while it is raised for about five seconds. After Harold falls, combine Harold's Core + Glimmer to craft the Laxative Sigil and open the pink portal.";
+ return ok;
+};
+
+const _mkcProgression=mkc;
+mkc=function(r){if(!r)return;_mkcProgression(r);if(W){if(r[0]===W.key)obs.portalKeyRecipe='Crafting Log + Leaves makes the Portal Key. Use it in the Overworld to open Harold’s portal.';
+ if(r[0]===W.bane)obs.haroldWeaponRecipe="Crafting Stone + Glimmer makes Harold's Sealbreaker. It is required to damage Harold during his final phase.";
+ if(r[0]===W.laxKey)obs.laxRecipe="Crafting Harold's Core + Glimmer makes the Laxative Sigil. Use it in the Overworld to open the pink portal.";save();}};
+
+const _claimProgression=claim;
+claim=function(id){const before=!!X.qd[id];_claimProgression(id);if(!before&&X.qd[id])save();};
+const _buyProgression=buy;
+buy=function(s){_buyProgression(s);save();};
+
+// Keep equipment and quest progress in each world's existing save record, including immediate updates after crafting/claiming.
+const _loadXProgression=loadX;
+loadX=function(x){_loadXProgression(x);armor=emptyArmor();if(x&&x.armor&&typeof x.armor==='object')for(const k of Object.keys(armor)){const a=x.armor[k];if(a&&Number.isInteger(a.id)&&W&&W.IT[a.id]&&W.IT[a.id].kind==='armor'&&W.IT[a.id].slot===k)armor[k]={id:a.id,n:1};}};
+const _saveProgression=save;
+save=function(){if(!W||X.dead)return;_saveProgression();try{const key='cc:'+wname,o=JSON.parse(localStorage[key]);o.x=o.x||{};o.x.armor=armor;o.x.qd=X.qd;o.x.hint=X.hint;localStorage[key]=JSON.stringify(o);}catch(e){}};
+const _startProgression=start;
+start=function(name,seed,ri,df,o){armor=emptyArmor();_startProgression(name,seed,ri,df,o);renderHB();};
+
+// Save milestones immediately so quest claims, crafting discoveries, and boss progression survive leaving the game.
+const _keProgression=ke;
+ke=function(e){if(e.dead)return;_keProgression(e);save();};
+const _spawnTickProgression=spawnTick;
+spawnTick=function(dt){_spawnTickProgression(dt);};
+
+// A small movement tune: fluffy creatures roll while wandering instead of standing like upright NPCs.
+const _updEProgression=updE;
+updE=function(e,dt){_updEProgression(e,dt);if(e.t==='fluffball'&&(Math.abs(e.v.x)+Math.abs(e.v.z)>.1)){e.m.rotation.x+=e.v.z*dt*1.6;e.m.rotation.z-=e.v.x*dt*1.6;}};
+
+// Expose progression helpers for simple local testing/debugging without changing the game's normal controls.
+Object.assign(window.CC,{equipArmorAt,unequipArmor,emptyArmor,rcp,save});
+
+lw();requestAnimationFrame(loop);
+</script></body></html>

@@ -437,8 +437,8 @@ addEventListener('keyup',e=>{K[e.key.toLowerCase()]=0});
 addEventListener('wheel',e=>{S=Math.max(12,Math.min(80,S*Math.exp(-e.deltaY*.001)))},{passive:true});
 cv.addEventListener('pointerdown',e=>{K[e.clientX>W/2?'d':'a']=1});
 addEventListener('pointerup',()=>{K.a=K.d=0});addEventListener('pointercancel',()=>{K.a=K.d=0});
-const c1=document.createElement('button');c1.textContent='1 · Current car';c1.dataset.car='1';c1.title='Select Car 1 (less durable)';c1.onclick=()=>{selectCar(1);c1.blur()};$('bar').appendChild(c1);
-const c2=document.createElement('button');c2.textContent='2 · Uploaded car';c2.dataset.car='2';c2.title='Select Car 2 from the uploaded file';c2.onclick=()=>{selectCar(2);c2.blur()};$('bar').appendChild(c2);
+const c1=document.createElement('button');c1.textContent='1 · Prowler X5 Rhino';c1.dataset.car='1';c1.title='Select Car 1 (less durable)';c1.onclick=()=>{selectCar(1);c1.blur()};$('bar').appendChild(c1);
+const c2=document.createElement('button');c2.textContent='2 · Toyetta Rebel';c2.dataset.car='2';c2.title='Select Car 2 from the uploaded file';c2.onclick=()=>{selectCar(2);c2.blur()};$('bar').appendChild(c2);
 for(const a of AREA_OPTIONS){const b=document.createElement('button');b.textContent=a.label;b.dataset.area=a.id;b.onclick=()=>{chooseArea(a.id);b.blur()};$('bar').appendChild(b)}
 const beamBtn=document.createElement('button');beamBtn.textContent='Beam view';beamBtn.onclick=()=>{vb^=1;beamBtn.blur()};$('bar').appendChild(beamBtn);
 chooseArea('funnel');updateCarButtons();requestAnimationFrame(frame);

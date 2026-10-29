@@ -671,7 +671,9 @@ async function maleInflateBuffer(){
 function maleBufferToBase64(buffer){const u=new Uint8Array(buffer),parts=[];for(let i=0;i<u.length;i+=32768)parts.push(String.fromCharCode(...u.subarray(i,Math.min(i+32768,u.length))));return btoa(parts.join(''))}
 function buildMaleSkaterRig(gltf){
  const full=gltf.scene;full.updateMatrixWorld(true);const bounds=new T.Box3().setFromObject(full),sz=bounds.getSize(V3()),center=bounds.getCenter(V3()),floorY=bounds.min.y;
- const modelScale=2.0/(sz.y||1.75),offset=V3(center.x,floorY,center.z),rigRoot=new T.Group();rigRoot.name='MaleCharacterProceduralRig';rigRoot.scale.setScalar(modelScale);
+ const modelScale=2.0/(sz.y||1.75),offset=V3(center.x,floorY,center.z),rigRoot=new T.Group();rigRoot.name='MaleCharacterProceduralRig';
+ // Normalize the source geometry itself to game units. Keeping rigRoot at unit scale avoids
+ // mixing source centimeters with the game's meter-sized joint coordinates during skinning.
  // Each bone uses the original model's coordinate system, then follows the same joints as the game's existing skater pose.
   const defs=[
    {name:'pelvis',a:[0,.74,0],b:[0,.94,0],type:'pelvis',p:2},
@@ -691,12 +693,17 @@ function buildMaleSkaterRig(gltf){
  const up=V3(0,1,0),bones=[],bindQuats=[];
  for(const d of defs){
   const a=V3(...d.a),b=V3(...d.b),dir=b.clone().sub(a).normalize(),bone=new T.Bone();bone.name=d.name;
-  bone.position.copy(a).sub(offset);const qb=new T.Quaternion();
+  // Geometry is centered in source units and the rig root scales it to game height.
+  // Convert the normalized joint coordinates to that same centered source-unit space.
+  bone.position.copy(a);const qb=new T.Quaternion();
   if(d.type==='foot')qb.identity();else qb.setFromUnitVectors(up,dir.lengthSq()>.5?dir:up);
   bone.quaternion.copy(qb);rigRoot.add(bone);d.bone=bone;d.bindQ=qb.clone();d.bindDir=dir.clone();d.bindA=a.clone();d.bindB=b.clone();bones.push(bone);bindQuats.push(qb);
  }
  // Put the rig under the actual actor before calculating inverse bind matrices, so actor movement is not double-applied.
- externalActor.add(rigRoot);externalActor.updateMatrixWorld(true);rigRoot.updateMatrixWorld(true);
+ // Bind the rig in its own local origin, not at the skater's current world position/yaw.
+ // That prevents an asynchronously loaded character from baking the current actor transform
+ // into its inverse bind matrices. The complete rig is attached to externalActor after binding.
+ rigRoot.updateMatrixWorld(true);
  const skeleton=new T.Skeleton(bones);
  const meshes=[];
  full.traverse(obj=>{if(!obj.isMesh||!obj.geometry)return;const geom=obj.geometry.clone();geom.applyMatrix4(obj.matrixWorld);const pos=geom.attributes.position;if(!pos||!pos.count){geom.dispose();return;}
@@ -724,31 +731,38 @@ function buildMaleSkaterRig(gltf){
   const segs=allowed.map(i=>({i,a:V3(...defs[i].a),b:V3(...defs[i].b)}));
   const si=new Uint16Array(pos.count*4),sw=new Float32Array(pos.count*4),vertexPoint=V3();
   for(let vi=0;vi<pos.count;vi++){
-   vertexPoint.set(pos.getX(vi),pos.getY(vi),pos.getZ(vi));
-   // Localized skin weights: the old +7 distance bias made almost every vertex blend
-   // equally across four unrelated joints, so arms and legs could not bend visibly.
+   // Convert source-mesh vertices into the centered 2m character space used by the rig.
+   // The source asset's Y values are around 145-174; comparing them directly to 0-2m
+   // limb segments caused every vertex to receive effectively arbitrary weights.
+   vertexPoint.set((pos.getX(vi)-offset.x)*modelScale,(pos.getY(vi)-offset.y)*modelScale,(pos.getZ(vi)-offset.z)*modelScale);
+   // Smooth localized weights: strongest joint wins, with neighboring joints blending
+   // only near joints so elbows/knees bend instead of the whole character moving rigidly.
    const ds=segs.map(s=>({i:s.i,d:maleDistSeg(vertexPoint,s.a,s.b)})).sort((a,b)=>a.d-b.d).slice(0,Math.min(4,segs.length));
    let total=0;
    for(let k=0;k<ds.length;k++){
-    const d=ds[k].d,w=Math.exp(-(d*d)/(2*.12*.12));
+    const d=ds[k].d,w=Math.exp(-(d*d)/(2*.10*.10));
     si[vi*4+k]=ds[k].i;sw[vi*4+k]=w;total+=w;
    }
    if(total<1e-12){si[vi*4]=ds[0].i;sw[vi*4]=1;total=1;}
-   for(let k=0;k<4;k++)sw[vi*4+k]/=total;
-   pos.setXYZ(vi,pos.getX(vi)-offset.x,pos.getY(vi)-offset.y,pos.getZ(vi)-offset.z);
+   for(let k=0;k<4;k++)sw[vi*4+k]=k<ds.length?sw[vi*4+k]/total:0;
+   pos.setXYZ(vi,vertexPoint.x,vertexPoint.y,vertexPoint.z);
   }
   geom.setAttribute('skinIndex',new T.Uint16BufferAttribute(si,4));geom.setAttribute('skinWeight',new T.Float32BufferAttribute(sw,4));pos.needsUpdate=true;geom.computeBoundingBox();geom.computeBoundingSphere();
   const skinned=new T.SkinnedMesh(geom,obj.material);skinned.name=obj.name||'CharacterPart';skinned.castShadow=true;skinned.receiveShadow=true;skinned.frustumCulled=false;rigRoot.add(skinned);meshes.push(skinned);
  });
  rigRoot.updateMatrixWorld(true);for(const m of meshes){m.updateMatrixWorld(true);m.bind(skeleton,m.matrixWorld.clone());}
- skeleton.calculateInverses(); // establish clean, centered bind matrices for the unanimated source pose
+ skeleton.calculateInverses(); // establish bind matrices in normalized local character space
  rigRoot.updateMatrixWorld(true);skeleton.update();
+ // Only now attach the already-bound rig to the moving actor.
+ externalActor.add(rigRoot);externalActor.updateMatrixWorld(true);rigRoot.updateMatrixWorld(true);skeleton.update();
  // Drop the unused static source geometries; the weighted copies above keep their original materials and textures.
  full.traverse(obj=>{if(obj.isMesh&&obj.geometry)obj.geometry.dispose()});
  const actorQ=new T.Quaternion(),inverseQ=new T.Quaternion(),ptLocal=PT.map(()=>V3()),tempDir=V3(),targetQ=new T.Quaternion(),targetStart=V3(),targetEnd=V3();
  function poseUpdate(){
   actorQ.setFromEuler(externalActor.rotation);inverseQ.copy(actorQ).invert();
-  for(let i=0;i<PT.length;i++)ptLocal[i].copy(PT[i]).sub(S.p).applyQuaternion(inverseQ).multiplyScalar(1/modelScale).sub(offset);
+  // PT and bone definitions are in centered game/model units. Do not subtract the
+  // source-model offset again: vertices and bone positions already had it removed.
+  for(let i=0;i<PT.length;i++)ptLocal[i].copy(PT[i]).sub(S.p).applyQuaternion(inverseQ);
   for(const d of defs){
    const start=d.p!==undefined?ptLocal[d.p]:null;
    if(d.type==='foot'){
@@ -776,7 +790,7 @@ async function loadEmbeddedMaleCharacter(){
     // The attached character replaces the old default rig; absent optional character files also fall back to this embedded model.
     if(!EXT.john)EXT.john=EXT.human;if(!EXT.buff)EXT.buff=EXT.human;
     if(activeCharacter==='human'||!EXT[activeCharacter])applyCharacterLook('human');else applyCharacterLook(activeCharacter);
-    console.info('Embedded skater model ready:',built.meshCount,'parts, articulated 2.0-unit procedural rig');
+    console.info('Embedded skater model ready:',built.meshCount,'parts, normalized articulated rig');
    }catch(e){console.error('Could not rig embedded skater model; using fallback character.',e)}
   },e=>console.error('Could not parse embedded character model.',e));
  }catch(e){console.error('Could not unpack embedded character model.',e)}

@@ -47,11 +47,10 @@ function startRun(){reset();mode='play';try{ac=ac||new AudioContext()}catch(_){}
 function goHome(){mode='title';reset(33);S.vx=T.HARE_CRUISE;S.inkX=S.x-600;S.ground=true}
 function say(s){S.txt=s;S.txtT=1.4;if(s==='SMASH'||s==='CRUSH')burst(S.x+30,S.y-40,FORM_COLS[2],2)}
 function flowThreshold(form,zone){
- // Flow now requires a real high-speed run, not ordinary cruising.
- // The threshold varies by form so each spirit can earn it through its own movement style.
- if(form===0)return Math.max(900,cruiseFor(zone)*1.32); // Hare: build speed on long descents.
- if(form===1)return 880; // Crane: carry speed into flight rather than relying on normal glide speed.
- return 700; // Tortoise: earn Flow through a genuinely fast downhill slide.
+ // Flow requires a higher sustained speed for every spirit.
+ if(form===0)return Math.max(1050,cruiseFor(zone)*1.5); // Hare
+ if(form===1)return 1050; // Crane
+ return 850; // Tortoise
 }
 function tickFlow(dt){
  const zone=zoneAt(S.x/T.PX).n,threshold=flowThreshold(S.form,zone);
@@ -63,8 +62,8 @@ function tickFlow(dt){
  }else if(S.flowCooldown>0){
   S.flowCooldown=Math.max(0,S.flowCooldown-dt);S.flow=0;
  }else{
-  if(S.vx>=threshold)S.flow=Math.min(100,S.flow+(100/3.1)*dt);
-  else S.flow=Math.max(0,S.flow-3.5*dt);
+  if(S.vx>=threshold)S.flow=Math.min(100,S.flow+(100/4.8)*dt);
+  else S.flow=Math.max(0,S.flow-5*dt);
   if(S.flow>=100){
    S.flow=100;S.flowActive=true;S.flowTime=10; // Fixed 10-second Flow burst; speed changes cannot extend or shorten it.
    // A sharp overdrive surge, then a speed floor prevents water, drag or collisions from slowing any form.

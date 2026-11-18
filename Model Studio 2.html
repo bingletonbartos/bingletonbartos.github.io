@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Model Studio</title>
+<style>
+:root{--bg:#eceff3;--panel:#fff;--ink:#16202c;--mute:#6b7787;--line:#d5dce4;--acc:#2f6bff;--on:#fff;--stage:#dfe6ee;--hi:#e6eeff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161c;--panel:#1a2029;--ink:#e8edf3;--mute:#8e9aaa;--line:#2c3541;--acc:#6b95ff;--on:#0b1220;--stage:#0e1319;--hi:#25324a}}
+:root[data-theme="dark"]{--bg:#12161c;--panel:#1a2029;--ink:#e8edf3;--mute:#8e9aaa;--line:#2c3541;--acc:#6b95ff;--on:#0b1220;--stage:#0e1319;--hi:#25324a}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+h1{font-size:17px;margin:0 10px 0 0;letter-spacing:-.01em}
+button,select,input,textarea{font:inherit;color:inherit}
+button,select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button.on,button.pri{background:var(--acc);color:var(--on);border-color:var(--acc);font-weight:600}
+.sp{flex:1}
+main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 330px;grid-template-rows:minmax(0,1.1fr) minmax(0,1fr)}
+#stage{grid-column:1;grid-row:1/3}
+main>aside{grid-column:2;border-right:0;border-left:1px solid var(--line)}
+main>aside.r{grid-row:2;border-top:1px solid var(--line)}
+main.closed{grid-template-columns:1fr}
+main.closed>aside{display:none}
+#pt{position:absolute;top:8px;right:8px;z-index:3;background:var(--panel)}
+aside{background:var(--panel);overflow:auto;padding:10px;border-right:1px solid var(--line)}
+aside.r{border-right:0;border-left:1px solid var(--line)}
+h2{font-size:13px;margin:0 0 8px}
+.mute{color:var(--mute);margin:4px 0}
+#stage{position:relative;background:var(--stage);min-height:300px;overflow:hidden}
+#cv,#v3{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#list{margin-bottom:12px}
+.row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;cursor:pointer}
+.row:hover{background:var(--bg)}.row.sel{background:var(--hi);outline:1px solid var(--acc)}
+.row .nm{flex:1;overflow:hidden;text-overflow:ellipsis}.row i{color:var(--mute);font-size:12px;font-style:normal}
+.row b{color:var(--mute);padding:0 4px}.row b:hover{color:#e5392b}
+.add{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.add input[type=text]{width:100%}
+input[type=text],input[type=number],select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px}
+input[type=color]{width:100%;height:30px;padding:2px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+label{display:block;font-size:12px;color:var(--mute)}label input,label select{color:var(--ink);margin-top:2px}
+label.full{grid-column:1/-1}
+.tools{position:absolute;top:8px;left:8px;z-index:2;display:none;flex-wrap:wrap;gap:4px;max-width:calc(100% - 16px)}
+.tools button{padding:4px 9px;background:var(--panel)}
+.tools button.on{background:var(--acc);color:var(--on)}
+.ly{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px}
+.ly button{padding:4px 8px;font-size:12px}
+.err{color:#e5392b;margin:2px 0}
+label.fl{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--ink);font-size:14px;margin:0}
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 12px;border-radius:8px;z-index:20;display:flex;gap:10px;align-items:center;max-width:92vw}
+#toast[hidden]{display:none}
+#toast button{padding:2px 8px}
+#itx{height:34vh}
+.tools .tcb{display:none}.tools.tc .tcb{display:inline-block}.tools.tc .ax{display:none}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;width:min(760px,94vw);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+textarea{width:100%;height:46vh;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@media(max-width:900px){body{height:auto;min-height:100%}main,main.closed{grid-template-columns:1fr;grid-template-rows:auto}#stage{grid-row:auto;height:70vw;min-height:320px;order:-1}main>aside,main>aside.r{grid-column:1;grid-row:auto;border:0;border-top:1px solid var(--line)}}
+</style></head>
+<body>
+<header>
+ <h1>Model Studio</h1>
+ <button id="m2" class="on">2D</button><button id="m3">3D</button>
+ <select id="cat" aria-label="Category"><option value="car">Car</option><option value="spider">Spider</option><option value="human">Human</option><option value="animal">Animal</option><option value="robot">Robot</option><option value="custom">Custom</option></select>
+ <button id="st">Load starter</button><button id="clr">Clear</button>
+ <span class="sp"></span>
+ <button id="an">Test animation</button><button id="im">Import</button><button id="ex" class="pri">Export code</button>
+</header>
+<main>
+ <aside>
+  <h2>Parts</h2><div id="list"></div><div class="g" style="grid-template-columns:repeat(3,1fr);margin:0 0 12px"><button id="bcopy">Copy</button><button id="bpaste">Paste</button><button id="bdup">Duplicate</button></div>
+  <div class="add">
+   <h2>Add a part</h2>
+   <input type="text" id="pname" list="names" placeholder="Part name, e.g. wheelFL" aria-label="Part name">
+   <datalist id="names"></datalist>
+   <div class="g" style="margin:0"><select id="shape" aria-label="Shape"></select><input type="color" id="col" value="#e0552f" aria-label="Color"></div>
+   <label><input type="checkbox" id="att" checked> Attach to selected part</label>
+   <button id="add" class="pri">Add part</button>
+   <button id="dr">Draw a shape by hand</button>
+   <p class="mute" id="hint2"></p>
+  </div>
+ </aside>
+ <div id="stage"><canvas id="cv"></canvas><div id="v3"></div><button id="pt">Hide panel</button><div class="tools" id="tools"><button data-t="move" class="on">Move (W)</button><button data-t="rotate">Rotate (E)</button><button data-t="scale">Scale (R)</button><button data-o="space" class="tcb" style="margin-left:8px">World</button><button data-o="snap" class="tcb">Snap off</button><button data-a="all" class="on ax" style="margin-left:8px">All axes</button><button data-a="x" class="ax">X</button><button data-a="y" class="ax">Y</button><button data-a="z" class="ax">Z</button></div></div>
+ <aside class="r"><h2>Part editor</h2><div id="props"></div></aside>
+</main>
+<dialog id="dlg">
+ <h2>Export code</h2>
+ <p class="mute" id="eh"></p>
+ <textarea id="code" readonly spellcheck="false"></textarea>
+ <div class="bar"><button id="cp" class="pri">Copy code</button><button id="dh" hidden>Download demo page (.html)</button><button id="dt" hidden>Download code (.txt)</button><button id="cl">Close</button></div>
+ <p class="mute" id="es"></p>
+</dialog>
+<dialog id="dlg2">
+ <h2>Import a model</h2>
+ <p class="mute">Paste code exported from Model Studio (or its JSON), or choose a file. Studio detects whether it is 2D or 3D and opens the matching editor. It replaces the model currently in that studio, and you can undo right after.</p>
+ <textarea id="itx" spellcheck="false" placeholder="Paste exported code here"></textarea>
+ <div class="bar"><button id="ig" class="pri">Import pasted code</button><label class="fl">Choose file<input type="file" id="if" accept=".js,.txt,.html,.json,.md" hidden></label><button id="ic">Close</button></div>
+ <p class="mute err" id="ie"></p>
+</dialog>
+<div id="toast" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+<script>
+const $=s=>document.querySelector(s),D=Math.PI/180;
+const CATS={car:['body','cabin','wheelFL','wheelFR','wheelBL','wheelBR','hood','door'],spider:['torso','head','legL0','legL1','legL2','legL3','legR0','legR1','legR2','legR3','fang'],human:['torso','head','armL','armR','legL','legR','hand','foot'],animal:['body','head','tail','legFL','legFR','legBL','legBR','ear','wing'],robot:['body','head','armL','armR','legL','legR','antenna','eye'],custom:['part1','part2']};
+const P=(name,shape,x,y,w,h,color,parent,ox,oy,rot,back)=>({name,shape,x,y,rot:rot||0,w,h,ox:ox||0,oy:oy||0,color,parent:parent||null,...(back?{back:1}:{})});
+const Q=(name,shape,x,y,z,w,h,d,color,parent,ox,oy,oz,rx,ry,rz)=>({name,shape,x,y,z,rx:rx||0,ry:ry||0,rz:rz||0,w,h,d,ox:ox||0,oy:oy||0,oz:oz||0,color,parent:parent||null});
+
+function tpl(cat,mode){
+ const a=[],is2=mode==='2d';
+ if(cat==='car'){
+  if(is2){a.push(P('body','rect',0,0,200,50,'#d63c2f'),P('cabin','rect',-5,-38,110,34,'#b02d22','body'),P('window','rect',0,0,84,22,'#9fd3ee','cabin'));
+   [['F',65],['B',-65]].forEach(([k,x])=>a.push(P('wheel'+k,'circle',x,26,46,46,'#222','body'),P('rim'+k,'rect',0,0,8,34,'#999','wheel'+k)));}
+  else{a.push(Q('body','box',0,.55,0,2.2,.5,1.1,'#d63c2f'),Q('cabin','box',-.1,.42,0,1.1,.4,.9,'#b02d22','body'));
+   [['FL',.7,.6],['FR',.7,-.6],['BL',-.7,.6],['BR',-.7,-.6]].forEach(([k,x,z])=>a.push(Q('wheel'+k,'cylinder',x,-.25,z,.55,.2,.55,'#222','body',0,0,0,90),Q('hub'+k,'box',0,0,0,.4,.24,.07,'#aaa','wheel'+k)));}
+ }else if(cat==='spider'){
+  if(is2){a.push(P('torso','circle',0,0,60,90,'#2b2b2b'),P('head','circle',0,-56,36,34,'#1c1c1c','torso'));
+   [-1,1].forEach(s=>[0,1,2,3].forEach(i=>a.push(P((s<0?'legL':'legR')+i,'rect',s*22,-28+i*19,64,7,'#111','torso',s*32,0,s*(i-1.5)*16,true))));}
+  else{a.push(Q('torso','sphere',0,.6,0,1,.6,1.3,'#2b2b2b'),Q('head','sphere',0,.05,-.85,.6,.5,.5,'#1c1c1c','torso'));
+   [-1,1].forEach(s=>[0,1,2,3].forEach(i=>a.push(Q((s<0?'legL':'legR')+i,'box',s*.35,-.1,-.4+i*.27,.9,.07,.07,'#111','torso',s*.45,0,0,0,-s*(i-1.5)*20,-s*25))));}
+ }else if(cat==='human'){
+  if(is2){a.push(P('torso','rect',0,0,40,70,'#3a6fd8'),P('head','circle',0,-50,34,34,'#f0c29a','torso'),
+   P('armL','rect',-26,-30,12,50,'#f0c29a','torso',0,22,0,true),P('armR','rect',26,-30,12,50,'#f0c29a','torso',0,22,0,true),
+   P('legL','rect',-10,35,14,60,'#2b3a55','torso',0,28),P('legR','rect',10,35,14,60,'#2b3a55','torso',0,28));}
+  else{a.push(Q('torso','box',0,1.2,0,.6,.9,.3,'#3a6fd8'),Q('head','sphere',0,.7,0,.4,.4,.4,'#f0c29a','torso'),
+   Q('armL','box',-.4,.35,0,.18,.7,.18,'#f0c29a','torso',0,-.3,0),Q('armR','box',.4,.35,0,.18,.7,.18,'#f0c29a','torso',0,-.3,0),
+   Q('legL','box',-.15,-.45,0,.2,.8,.2,'#2b3a55','torso',0,-.4,0),Q('legR','box',.15,-.45,0,.2,.8,.2,'#2b3a55','torso',0,-.4,0));}
+ }else CATS[cat].forEach((n,i)=>{const c='hsl('+(i*47%360)+',55%,55%)';a.push(is2?P(n,'rect',(i%4-1.5)*70,(i/4|0)*60-60,50,40,c):Q(n,'box',(i%4-1.5)*.8,(i/4|0)*.8,0,.5,.5,.5,c))});
+ if(is2)layerize(a);
+ return a;
+}
+function layerize(a){a.forEach((p,i)=>{if(p.z===undefined)p.z=i});a.forEach(p=>{if(p.back){const q=a.find(r=>r.name===p.parent);p.z=(q?q.z:0)-.5}delete p.back});[...a].sort((x,y)=>x.z-y.z).forEach((p,i)=>p.z=i)}
+
+/* ---- Runtime functions: these exact functions are written into the export ---- */
+function drawModel2D(ctx,model,x,y,s,pose){
+ pose=pose||{};s=s||1;
+ const by={},M={};model.parts.forEach(p=>by[p.name]=p);
+ const mat=p=>{
+  if(M[p.name])return M[p.name];
+  const q=p.parent&&by[p.parent]?mat(by[p.parent]):[1,0,0,1,0,0],r=(p.rot+(pose[p.name]||0))*Math.PI/180,c=Math.cos(r),n=Math.sin(r);
+  return M[p.name]=[q[0]*c+q[2]*n,q[1]*c+q[3]*n,-q[0]*n+q[2]*c,-q[1]*n+q[3]*c,q[0]*p.x+q[2]*p.y+q[4],q[1]*p.x+q[3]*p.y+q[5]];
+ };
+ ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+ model.parts.map((p,i)=>[p,i]).sort((a,b)=>(a[0].z||0)-(b[0].z||0)||a[1]-b[1]).forEach(([p])=>{
+  ctx.save();ctx.transform(...mat(p));ctx.translate(p.ox,p.oy);ctx.fillStyle=p.color;ctx.beginPath();
+  if(p.shape==='rect')ctx.rect(-p.w/2,-p.h/2,p.w,p.h);
+  else if(p.shape==='circle')ctx.ellipse(0,0,p.w/2,p.h/2,0,0,7);
+  else if(p.shape==='triangle'){ctx.moveTo(0,-p.h/2);ctx.lineTo(p.w/2,p.h/2);ctx.lineTo(-p.w/2,p.h/2);ctx.closePath()}
+  else{p.pts.forEach((a,i)=>i?ctx.lineTo(a[0]*p.w,a[1]*p.h):ctx.moveTo(a[0]*p.w,a[1]*p.h));ctx.closePath()}
+  ctx.fill();ctx.restore();
+ });
+ ctx.restore();
+}
+function buildModel3D(THREE,model){
+ const root=new THREE.Group(),r=Math.PI/180;root.parts={};
+ model.parts.forEach(p=>{
+  const g=new THREE.Group();g.name=p.name;g.position.set(p.x,p.y,p.z);
+  g.rotation.order='ZYX';g.rotation.set(p.rx*r,p.ry*r,p.rz*r);
+  const geo=p.shape==='sphere'?new THREE.SphereGeometry(.5,24,16):p.shape==='cylinder'?new THREE.CylinderGeometry(.5,.5,1,24):p.shape==='cone'?new THREE.ConeGeometry(.5,1,24):new THREE.BoxGeometry(1,1,1);
+  const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:p.color}));
+  m.scale.set(p.w,p.h,p.d);m.position.set(p.ox,p.oy,p.oz);g.add(m);root.parts[p.name]=g;
+ });
+ model.parts.forEach(p=>(p.parent?root.parts[p.parent]:root).add(root.parts[p.name]));
+ return root;
+}
+
+/* ---- State ---- */
+let S={mode:'2d',cat:'car',m:{'2d':null,'3d':null},sel:{'2d':null,'3d':null},anim:false,draw:false};
+try{const s=JSON.parse(localStorage.getItem('mstudio4')||'null');if(s&&s.m&&s.m['2d']&&s.m['3d'])S=Object.assign(S,s,{anim:false,draw:false})}catch(e){}
+if(!S.m['2d'])S.m={'2d':{parts:tpl(S.cat,'2d')},'3d':{parts:tpl(S.cat,'3d')}};
+S.m['2d'].parts.forEach(p=>{if(p.shape==='path'&&!p.w){const xs=p.pts.map(a=>a[0]),ys=p.pts.map(a=>a[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),bw=Math.max(x1-x0,4),bh=Math.max(y1-y0,4),mx=(x0+x1)/2,my=(y0+y1)/2;p.pts=p.pts.map(a=>[(a[0]-mx)/bw,(a[1]-my)/bh]);p.w=bw;p.h=bh;p.ox=Math.round(mx);p.oy=Math.round(my)}});
+layerize(S.m['2d'].parts);
+const cur=()=>S.m[S.mode],sel=()=>cur().parts.find(p=>p.name===S.sel[S.mode]);
+const desc=(m,n)=>m.parts.filter(p=>p.parent===n).flatMap(p=>[p.name,...desc(m,p.name)]);
+let dirty3=true;
+const save=()=>{try{localStorage.setItem('mstudio4',JSON.stringify(S))}catch(e){}};
+const changed=()=>{save();dirty3=true};
+
+/* ---- UI ---- */
+function renderList(){
+ const m=cur(),out=[];
+ const walk=(par,d)=>m.parts.filter(p=>p.parent===par).forEach(p=>{
+  out.push(`<div class="row${p.name===S.sel[S.mode]?' sel':''}" data-n="${esc(p.name)}" style="padding-left:${d*14+6}px"><span class="nm">${esc(p.name)}</span><i>${S.mode==='2d'?'L'+rk(p)+' ':''}${p.shape}</i><b data-del="${esc(p.name)}" title="Delete part">✕</b></div>`);walk(p.name,d+1)});
+ walk(null,0);
+ $('#list').innerHTML=out.join('')||'<p class="mute">No parts yet. Add one below or load a starter.</p>';
+}
+const F2=['x','y','rot','w','h','ox','oy'],F3=['x','y','z','rx','ry','rz','w','h','d','ox','oy','oz'];
+function renderProps(){
+ const el=$('#props'),p=sel(),m=cur();
+ if(!p){el.innerHTML='<p class="mute">Select a part in the list'+(S.mode==='2d'?' or click it on the canvas':'')+' to edit it.</p>';return}
+ const bad=[p.name,...desc(m,p.name)],shapes=S.mode==='2d'?['rect','circle','triangle','path']:['box','sphere','cylinder','cone'];
+ const st=S.mode==='2d'?1:.05;
+ el.innerHTML=`<label>Name<input type="text" data-k="name" value="${esc(p.name)}"></label><p class="mute err" id="nmsg"></p>
+ <div class="g"><label>Parent<select data-k="parent"><option value="">none</option>${m.parts.filter(q=>!bad.includes(q.name)).map(q=>`<option value="${esc(q.name)}"${q.name===p.parent?' selected':''}>${esc(q.name)}</option>`).join('')}</select></label>
+ <label>Shape<select data-k="shape"${p.shape==='path'?' disabled':''}>${shapes.map(s=>`<option${s===p.shape?' selected':''}>${s}</option>`).join('')}</select></label></div>
+ <label>Color<input type="color" data-k="color" value="${p.color}"></label>
+ <div class="g">${(S.mode==='2d'?F2:F3).map(k=>`<label>${k}<input type="number" step="${k[0]==='r'?5:st}" data-k="${k}" value="${p[k]}"></label>`).join('')}</div>
+ ${S.mode==='2d'?`<label>Layer ${rk(p)} of ${m.parts.length} (higher draws on top)</label><div class="ly"><button data-ly="front">To front</button><button data-ly="up">Forward</button><button data-ly="down">Backward</button><button data-ly="back">To back</button></div>`:''}
+ <p class="mute">x, y${S.mode==='3d'?', z':''} = where this part pivots on its parent. ox, oy${S.mode==='3d'?', oz':''} = how far the shape sits from its pivot, so a leg can swing from its top.</p>`;
+}
+$('#props').oninput=e=>{
+ const t=e.target,k=t.dataset.k,p=sel();if(!k||!p)return;
+ if(k==='name'){const v=t.value.trim(),bad=!v||cur().parts.some(q=>q!==p&&q.name===v);$('#nmsg').textContent=bad?(v?'That name is already used.':'Give the part a name.'):'';if(bad)return;
+  cur().parts.forEach(q=>{if(q.parent===p.name)q.parent=v});p.name=v;S.sel[S.mode]=v;renderList()}
+ else if(k==='parent'){p.parent=t.value||null;renderList()}
+ else if(k==='shape'){p.shape=t.value;renderList()}
+ else if(k==='color')p.color=t.value;
+ else p[k]=parseFloat(t.value)||0;
+ changed();
+};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+const rk=p=>[...cur().parts].sort((a,b)=>a.z-b.z).indexOf(p)+1;
+function syncIn(p){document.querySelectorAll('#props input[type=number]').forEach(i=>{if(i.dataset.k in p)i.value=p[i.dataset.k]})}
+function hdl(p,m){const hw=p.w/2,hh=p.h/2,a=[];[-1,0,1].forEach(sy=>[-1,0,1].forEach(sx=>{if(sx||sy)a.push({sx,sy,l:[p.ox+sx*hw,p.oy+sy*hh]})}));a.push({rot:1,l:[p.ox,p.oy-hh-28]});a.forEach(h=>{const q=m.transformPoint(new DOMPoint(h.l[0],h.l[1]));h.x=q.x;h.y=q.y});return a}
+$('#props').onclick=e=>{
+ const a=e.target.dataset.ly,p=sel();if(!a||!p)return;
+ const l=[...cur().parts].sort((x,y)=>x.z-y.z);l.forEach((q,j)=>q.z=j);const i=l.indexOf(p);
+ if(a==='front')p.z=1e9;else if(a==='back')p.z=-1e9;else{const o=l[i+(a==='up'?1:-1)];if(o)[p.z,o.z]=[o.z,p.z]}
+ [...cur().parts].sort((x,y)=>x.z-y.z).forEach((q,j)=>q.z=j);changed();renderList();renderProps();
+};
+const del=n=>{const m=cur(),go=[n,...desc(m,n)];m.parts=m.parts.filter(p=>!go.includes(p.name));S.m[S.mode]=m;if(go.includes(S.sel[S.mode]))S.sel[S.mode]=null;changed();renderList();renderProps()};
+$('#list').onclick=e=>{
+ if(e.target.dataset.del){del(e.target.dataset.del);return}
+ const r=e.target.closest('.row');if(r){S.sel[S.mode]=r.dataset.n;renderList();renderProps()}
+};
+function uniq(b){b=(b||'').trim()||'part';let n=b,i=2;while(cur().parts.some(p=>p.name===n))n=b+i++;return n}
+$('#add').onclick=()=>{
+ const sh=$('#shape').value,nm=uniq($('#pname').value),c=$('#col').value,par=$('#att').checked?S.sel[S.mode]:null;
+ const np=S.mode==='2d'?P(nm,sh,0,0,sh==='rect'?70:50,sh==='rect'?40:50,c,par):Q(nm,sh,0,0,0,.6,.6,.6,c,par);
+ if(S.mode==='2d')np.z=Math.max(-1,...cur().parts.map(q=>q.z))+1;
+ cur().parts.push(np);
+ S.sel[S.mode]=nm;$('#pname').value='';changed();renderList();renderProps();
+};
+function setMode(m){
+ S.mode=m;S.draw=false;$('#m2').classList.toggle('on',m==='2d');$('#m3').classList.toggle('on',m==='3d');
+ $('#cv').style.display=m==='2d'?'block':'none';$('#v3').style.display=m==='3d'?'block':'none';
+ $('#dr').style.display=m==='2d'?'':'none';$('#dr').classList.remove('on');
+ $('#shape').innerHTML=(m==='2d'?['rect','circle','triangle']:['box','sphere','cylinder','cone']).map(s=>`<option>${s}</option>`).join('');
+ $('#tools').style.display=m==='3d'?'flex':'none';
+ $('#hint2').textContent=m==='2d'?'Drag a part to move it. Drag a square handle to resize it and the round handle to rotate it (hold Shift to snap). Hand-drawn shapes start unattached; pick a parent in the right panel.':'Click a part to select it, then drag the arrows (Move), rings (Rotate) or cubes (Scale). Drag empty space to orbit and scroll to zoom. Shortcuts: W, E, R switch tools; Ctrl+C, Ctrl+V, Ctrl+D copy, paste, duplicate; Delete removes the part.';
+ dirty3=true;fit();renderList();renderProps();
+}
+$('#m2').onclick=()=>setMode('2d');$('#m3').onclick=()=>setMode('3d');
+$('#cat').value=S.cat;
+const setNames=()=>{$('#names').innerHTML=CATS[S.cat].map(n=>`<option value="${n}">`).join('')};
+$('#cat').onchange=e=>{S.cat=e.target.value;setNames();save()};
+$('#st').onclick=()=>{S.m[S.mode]={parts:tpl(S.cat,S.mode)};S.sel[S.mode]=null;changed();renderList();renderProps()};
+$('#clr').onclick=()=>{S.m[S.mode]={parts:[]};S.sel[S.mode]=null;changed();renderList();renderProps()};
+$('#an').onclick=()=>{S.anim=!S.anim;$('#an').classList.toggle('on',S.anim)};
+$('#dr').onclick=()=>{S.draw=!S.draw;$('#dr').classList.toggle('on',S.draw);$('#dr').textContent=S.draw?'Drawing: drag on the canvas':'Draw a shape by hand'};
+
+/* ---- 2D canvas ---- */
+const cv=$('#cv'),cx=cv.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);
+let drag=null,stroke=null,hd=null;
+function wm(model,p){const ch=[];for(let q=p;q;q=model.parts.find(z=>z.name===q.parent))ch.unshift(q);const m=new DOMMatrix();ch.forEach(q=>{m.translateSelf(q.x,q.y);m.rotateSelf(q.rot)});return m}
+function hit(model,p,wx,wy){
+ const l=wm(model,p).inverse().transformPoint(new DOMPoint(wx,wy)),x=l.x-p.ox,y=l.y-p.oy;
+ if(p.shape==='circle')return x*x/((p.w/2)**2)+y*y/((p.h/2)**2)<=1;
+ return Math.abs(x)<=p.w/2&&Math.abs(y)<=p.h/2;
+}
+const wpos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left-r.width/2,e.clientY-r.top-r.height/2]};
+cv.onpointerdown=e=>{
+ cv.setPointerCapture(e.pointerId);const[x,y]=wpos(e),m=cur();
+ if(S.draw){stroke=[[x,y]];return}
+ const sp=sel();
+ if(sp&&!S.anim){const q=hdl(sp,wm(m,sp)).find(k=>Math.hypot(k.x-x,k.y-y)<10);
+  if(q){const par=m.parts.find(z=>z.name===sp.parent);hd={q,p:sp,inv:wm(m,sp).inverse(),pinv:(par?wm(m,par):new DOMMatrix()).inverse(),o:{ox:sp.ox,oy:sp.oy,w:sp.w,h:sp.h}};return}}
+ const h=[...m.parts].sort((a,b)=>b.z-a.z).find(p=>hit(m,p,x,y));
+ if(h){
+  S.sel['2d']=h.name;const par=m.parts.find(q=>q.name===h.parent),inv=(par?wm(m,par):new DOMMatrix()).inverse(),s=inv.transformPoint(new DOMPoint(x,y));
+  drag={h,inv,sx:s.x,sy:s.y,ox:h.x,oy:h.y};
+ }else S.sel['2d']=null;
+ renderList();renderProps();
+};
+cv.onpointermove=e=>{
+ const[x,y]=wpos(e);
+ if(stroke){const l=stroke[stroke.length-1];if(Math.hypot(x-l[0],y-l[1])>4)stroke.push([x,y]);return}
+ if(hd){const{q,p,o}=hd;
+  if(q.rot){const v=hd.pinv.transformPoint(new DOMPoint(x,y)),r=(Math.atan2(v.y-p.y,v.x-p.x)-Math.atan2(o.oy-o.h/2-28,o.ox))/D,n=((r+180)%360+360)%360-180;p.rot=e.shiftKey?Math.round(n/15)*15:Math.round(n)}
+  else{const l=hd.inv.transformPoint(new DOMPoint(x,y));
+   if(q.sx){const ex=o.ox-q.sx*o.w/2,nw=Math.max(4,(l.x-ex)*q.sx);p.w=Math.round(nw);p.ox=Math.round(ex+q.sx*nw/2)}
+   if(q.sy){const ey=o.oy-q.sy*o.h/2,nh=Math.max(4,(l.y-ey)*q.sy);p.h=Math.round(nh);p.oy=Math.round(ey+q.sy*nh/2)}}
+  syncIn(p);return}
+ if(drag){const s=drag.inv.transformPoint(new DOMPoint(x,y));drag.h.x=Math.round(drag.ox+s.x-drag.sx);drag.h.y=Math.round(drag.oy+s.y-drag.sy);syncIn(drag.h)}
+};
+cv.onpointerup=()=>{
+ if(stroke&&stroke.length>2){
+  const xs=stroke.map(a=>a[0]),ys=stroke.map(a=>a[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),bw=Math.max(x1-x0,4),bh=Math.max(y1-y0,4),mx=(x0+x1)/2,my=(y0+y1)/2,nm=uniq('drawn');
+  const p=P(nm,'path',Math.round(mx),Math.round(my),Math.round(bw),Math.round(bh),$('#col').value);
+  p.pts=stroke.map(a=>[+((a[0]-mx)/bw).toFixed(4),+((a[1]-my)/bh).toFixed(4)]);p.z=Math.max(-1,...cur().parts.map(q=>q.z))+1;
+  cur().parts.push(p);S.sel['2d']=nm;changed();renderList();renderProps();
+ }
+ stroke=null;drag=null;hd=null;save();
+};
+function motion(n,i,t){return/wheel/i.test(n)?t*240:Math.sin(t*4+i*.9)*22}
+function draw2(t){
+ const w=cv.width/dpr,h=cv.height/dpr,m=S.m['2d'];
+ cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w,h);cx.save();cx.translate(w/2,h/2);
+ cx.strokeStyle='rgba(128,140,160,.22)';cx.lineWidth=1;cx.beginPath();
+ for(let x=-Math.ceil(w/80)*40;x<=w/2;x+=40){cx.moveTo(x,-h/2);cx.lineTo(x,h/2)}
+ for(let y=-Math.ceil(h/80)*40;y<=h/2;y+=40){cx.moveTo(-w/2,y);cx.lineTo(w/2,y)}
+ cx.stroke();cx.strokeStyle='rgba(128,140,160,.5)';cx.beginPath();cx.moveTo(-w/2,0);cx.lineTo(w/2,0);cx.moveTo(0,-h/2);cx.lineTo(0,h/2);cx.stroke();
+ const pose={};if(S.anim)m.parts.forEach((p,i)=>pose[p.name]=motion(p.name,i,t));
+ drawModel2D(cx,m,0,0,1,pose);
+ const p=sel();
+ if(p&&!S.anim){const mm=wm(m,p),hs=hdl(p,mm),o=mm.transformPoint(new DOMPoint(0,0));
+  cx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||'#2f6bff';cx.lineWidth=1.5;cx.beginPath();
+  [0,2,7,5].forEach((i,j)=>j?cx.lineTo(hs[i].x,hs[i].y):cx.moveTo(hs[i].x,hs[i].y));cx.closePath();cx.moveTo(hs[1].x,hs[1].y);cx.lineTo(hs[8].x,hs[8].y);cx.stroke();
+  cx.fillStyle='#fff';hs.forEach(k=>{cx.beginPath();if(k.rot)cx.arc(k.x,k.y,6,0,7);else cx.rect(k.x-5,k.y-5,10,10);cx.fill();cx.stroke()});
+  cx.fillStyle='#ff3b30';cx.beginPath();cx.arc(o.x,o.y,4,0,7);cx.fill()}
+ if(stroke){cx.strokeStyle=$('#col').value;cx.lineWidth=3;cx.lineJoin='round';cx.beginPath();stroke.forEach((a,i)=>i?cx.lineTo(a[0],a[1]):cx.moveTo(a[0],a[1]));cx.stroke()}
+ cx.restore();
+}
+
+/* ---- 3D view ---- */
+let R,scene,cam,grp,mark,bb,bh,tc,dr3=null,tool='move',axis='all',local=false,snap=false,az=.7,el=.35,rad=7;
+function init3(){
+ if(!window.THREE){$('#v3').innerHTML='<p class="mute" style="padding:16px">three.js could not load, so 3D is unavailable. 2D still works.</p>';return}
+ R=new THREE.WebGLRenderer({antialias:true,alpha:true});R.setPixelRatio(dpr);$('#v3').appendChild(R.domElement);
+ scene=new THREE.Scene();cam=new THREE.PerspectiveCamera(45,1,.1,100);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x445566,.95));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(3,6,4);scene.add(dl);
+ scene.add(new THREE.GridHelper(10,20,0x8896aa,0x8896aa));
+ mark=new THREE.Mesh(new THREE.SphereGeometry(.06),new THREE.MeshBasicMaterial({color:0xff3b30,depthTest:false}));mark.renderOrder=9;scene.add(mark);
+ bb=new THREE.Box3(new THREE.Vector3(-.1,-.1,-.1),new THREE.Vector3(.1,.1,.1));bh=new THREE.Box3Helper(bb,0xff3b30);bh.material.depthTest=false;bh.renderOrder=8;bh.visible=false;scene.add(bh);
+ if(THREE.TransformControls){
+  tc=new THREE.TransformControls(cam,R.domElement);scene.add(tc);$('#tools').classList.add('tc');
+  tc.addEventListener('dragging-changed',e=>{if(!e.value)save()});
+  const r2=v=>Math.round(v*100)/100;
+  tc.addEventListener('objectChange',()=>{
+   const o=tc.object,p=sel();if(!o||!p)return;
+   if(tool==='scale'){p.w=Math.max(.02,r2(o.scale.x));p.h=Math.max(.02,r2(o.scale.y));p.d=Math.max(.02,r2(o.scale.z))}
+   else if(tool==='move'){p.x=r2(o.position.x);p.y=r2(o.position.y);p.z=r2(o.position.z)}
+   else{p.rx=Math.round(o.rotation.x/D*2)/2;p.ry=Math.round(o.rotation.y/D*2)/2;p.rz=Math.round(o.rotation.z/D*2)/2}
+   syncIn(p);
+  });
+ }
+ const d=R.domElement,rc=new THREE.Raycaster(),pl=new THREE.Plane(),ndc=new THREE.Vector2();let last=null,dn=null;
+ const ray=e=>{const r=d.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);rc.setFromCamera(ndc,cam)};
+ d.onpointerdown=e=>{
+  if(tc&&(tc.dragging||tc.axis))return;d.setPointerCapture(e.pointerId);last=[e.clientX,e.clientY];dn=[e.clientX,e.clientY];if(!grp)return;
+  ray(e);const h=e.button===0&&!S.anim?rc.intersectObjects(Object.values(grp.parts).map(g=>g.children[0]),false)[0]:null;
+  if(!h)return;
+  const name=h.object.parent.name,p=S.m['3d'].parts.find(q=>q.name===name),g=grp.parts[name],wp=g.getWorldPosition(new THREE.Vector3()),st=new THREE.Vector3();
+  S.sel['3d']=name;renderList();renderProps();if(tc){last=null;return}
+  pl.setFromNormalAndCoplanarPoint(cam.getWorldDirection(new THREE.Vector3()),wp);rc.ray.intersectPlane(pl,st);
+  dr3={p,st,q:g.parent.getWorldQuaternion(new THREE.Quaternion()).invert(),o:{...p},sx:e.clientX,sy:e.clientY};last=null;
+ };
+ d.onpointermove=e=>{
+  if(dr3){const{p,o}=dr3,ks=axis==='all'?['x','y','z']:[axis],dx=e.clientX-dr3.sx,dy=e.clientY-dr3.sy;
+   if(tool==='move'){ray(e);const pt=new THREE.Vector3();if(rc.ray.intersectPlane(pl,pt)){const dl=pt.sub(dr3.st).applyQuaternion(dr3.q);ks.forEach(k=>p[k]=Math.round((o[k]+dl[k])*100)/100)}}
+   else if(tool==='rotate'){if(axis==='all'){p.ry=Math.round((o.ry+dx*.6)*2)/2;p.rx=Math.round((o.rx+dy*.6)*2)/2}else{const k='r'+axis;p[k]=Math.round((o[k]+(dx-dy)*.6)*2)/2}}
+   else{const f=Math.max(.05,1+(dx-dy)*.01),mp={x:'w',y:'h',z:'d'};ks.forEach(k=>p[mp[k]]=Math.max(.02,Math.round(o[mp[k]]*f*100)/100))}
+   syncIn(p);return}
+  if(!last)return;az-=(e.clientX-last[0])*.01;el=Math.max(-1.4,Math.min(1.4,el+(e.clientY-last[1])*.01));last=[e.clientX,e.clientY];
+ };
+ d.onpointerup=e=>{if(last&&dn&&Math.hypot(e.clientX-dn[0],e.clientY-dn[1])<4&&!(tc&&(tc.dragging||tc.axis))){S.sel['3d']=null;renderList();renderProps()}last=null;if(dr3){dr3=null;save()}};
+ d.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(2,Math.min(25,rad*(1+e.deltaY*.001)))},{passive:false});
+}
+function draw3(t){
+ if(!R)return;
+ if(dirty3||!grp){
+  if(grp){scene.remove(grp);grp.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()})}
+  grp=buildModel3D(THREE,S.m['3d']);scene.add(grp);dirty3=false;
+ }
+ S.m['3d'].parts.forEach((p,i)=>{
+  const g=grp.parts[p.name],ms=g.children[0];g.position.set(p.x,p.y,p.z);g.rotation.set(p.rx*D,p.ry*D,p.rz*D);ms.scale.set(p.w,p.h,p.d);ms.position.set(p.ox,p.oy,p.oz);
+  if(S.anim)g.rotation[/wheel/i.test(p.name)||S.cat==='spider'?'z':'x']+=motion(p.name,i,t)*D;
+ });
+ grp.updateMatrixWorld(true);
+ const p=sel(),g=p&&grp.parts[p.name];mark.visible=!!g&&!S.anim;bh.visible=!!g;if(g){g.getWorldPosition(mark.position);bb.setFromObject(g.children[0])}
+ if(tc){const want=g&&!S.anim?(tool==='scale'?g.children[0]:g):undefined;if(tc.object!==want){if(want)tc.attach(want);else tc.detach()}tc.setMode(tool==='move'?'translate':tool);tc.setSpace(local?'local':'world')}
+ cam.position.set(rad*Math.cos(el)*Math.sin(az),rad*Math.sin(el)+.8,rad*Math.cos(el)*Math.cos(az));cam.lookAt(0,.6,0);
+ R.render(scene,cam);
+}
+function fit(){
+ const s=$('#stage'),w=s.clientWidth,h=s.clientHeight;if(!w||!h)return;
+ cv.width=w*dpr;cv.height=h*dpr;
+ if(R){R.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}
+}
+new ResizeObserver(fit).observe($('#stage'));
+(function loop(ms){requestAnimationFrame(loop);const t=ms/1000;if(S.mode==='2d')draw2(t);else draw3(t)})(0);
+
+/* ---- Export ---- */
+const fmt=m=>'{"parts":[\n'+m.parts.map(p=>' '+JSON.stringify(p)).join(',\n')+'\n]}';
+function makeCode(){
+ const m=cur(),n=m.parts.map(p=>p.name),a=n[0]||'part',b=n[1]||a;
+ if(S.mode==='2d')return `// Model Studio export (2D, ${S.cat})\n// Paste inside a <script> tag. Parts are listed parent-first; each has a pivot (x, y), rotates by rot, and is drawn in layer order z (higher = on top).\nconst MODEL = ${fmt(m)};\n\n${drawModel2D.toString()}\n\n// Draw it:   drawModel2D(ctx, MODEL, x, y, scale, pose)\n// Animate:   pose is { partName: extraDegrees }, e.g. { ${JSON.stringify(b)}: Math.sin(time) * 20 }\n// Example:   drawModel2D(ctx, MODEL, 200, 200, 1, { ${JSON.stringify(b)}: 30 });\n`;
+ return `// Model Studio export (3D, ${S.cat})\n// Needs three.js (r128 or newer) loaded before this code. Add your own lights.\nconst MODEL = ${fmt(m)};\n\n${buildModel3D.toString()}\n\n// Build it:  const model = buildModel3D(THREE, MODEL); scene.add(model);\n// Animate:   every part is a pivot Group in model.parts, e.g. model.parts[${JSON.stringify(b)}].rotation.z += 0.1;\n// Lights:    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1));\n`;
+}
+function makeDemo(code){
+ const mo=motion.toString();
+ if(S.mode==='2d')return `<!DOCTYPE html>\n<html><body style="margin:0;background:#1d2530"><canvas id="c" width="600" height="450"></canvas>\n<script>\n${code}\n${mo}\nconst ctx=document.getElementById('c').getContext('2d');\n(function f(ms){const t=ms/1000,pose={};ctx.clearRect(0,0,600,450);MODEL.parts.forEach((p,i)=>pose[p.name]=motion(p.name,i,t));drawModel2D(ctx,MODEL,300,225,1,pose);requestAnimationFrame(f)})(0);\n<\/script></body></html>`;
+ return `<!DOCTYPE html>\n<html><body style="margin:0;background:#1d2530">\n<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>\n<script>\n${code}\n${mo}\nconst sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,4/3,.1,100),r=new THREE.WebGLRenderer({antialias:true});r.setSize(600,450);document.body.appendChild(r.domElement);\nsc.add(new THREE.HemisphereLight(0xffffff,0x445566,1));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(3,6,4);sc.add(dl);\nconst g=buildModel3D(THREE,MODEL);sc.add(g);\n(function f(ms){const t=ms/1000,d=Math.PI/180;MODEL.parts.forEach((p,i)=>{const o=g.parts[p.name];o.rotation.set(p.rx*d,p.ry*d,p.rz*d);o.rotation[/wheel/i.test(p.name)||${S.cat==='spider'}?'z':'x']+=motion(p.name,i,t)*d});cam.position.set(Math.sin(t*.4)*6,3,Math.cos(t*.4)*6);cam.lookAt(0,.6,0);r.render(sc,cam);requestAnimationFrame(f)})(0);\n<\/script></body></html>`;
+}
+let DL=null;
+try{claude.use('downloads').then(d=>{DL=d;if(d){$('#dh').hidden=false;$('#dt').hidden=false}}).catch(()=>{})}catch(e){}
+$('#ex').onclick=()=>{
+ $('#code').value=makeCode();$('#es').textContent='';
+ $('#eh').textContent=S.mode==='2d'?'Paste this into a <script> tag in your game, then call drawModel2D each frame.':'Paste this into a <script> tag after three.js, then call buildModel3D(THREE, MODEL).';
+ $('#dlg').showModal();
+};
+$('#cl').onclick=()=>$('#dlg').close();
+$('#cp').onclick=async()=>{
+ const ta=$('#code');try{await navigator.clipboard.writeText(ta.value)}catch(e){ta.select();document.execCommand('copy')}
+ $('#cp').textContent='Copied';setTimeout(()=>$('#cp').textContent='Copy code',1500);
+};
+const sv=(f,d)=>DL.save({filename:f,data:d}).then(()=>$('#es').textContent='Saved '+f).catch(e=>{$('#es').textContent=e&&e.code==='declined'?'Save cancelled.':'Could not save here. Use Copy code instead.'});
+$('#dh').onclick=()=>sv('model-'+S.cat+'-'+S.mode+'.html',makeDemo($('#code').value));
+$('#dt').onclick=()=>sv('model-'+S.cat+'-'+S.mode+'.txt',$('#code').value);
+
+/* ---- Import ---- */
+function extractModel(t){
+ let i=t.indexOf('const MODEL');i=t.indexOf('{',i<0?0:i);if(i<0)return null;
+ let d=0,q=false,bs=false;
+ for(let j=i;j<t.length;j++){const c=t[j];
+  if(q){if(bs)bs=false;else if(c==='\\')bs=true;else if(c==='"')q=false;continue}
+  if(c==='"')q=true;else if(c==='{')d++;else if(c==='}'&&--d===0)return JSON.parse(t.slice(i,j+1))}
+ return null;
+}
+function detectMode(parts,text){
+ const h=/Model Studio export \((2D|3D)/i.exec(text);if(h)return h[1].toLowerCase();
+ if(/buildModel3D/.test(text))return '3d';if(/drawModel2D/.test(text))return '2d';
+ const s3=['box','sphere','cylinder','cone'],s2=['rect','circle','triangle','path'];let a=0,b=0;
+ parts.forEach(p=>{if(p&&typeof p==='object'){if(s3.includes(p.shape)||'rx' in p||'ry' in p||'rz' in p||'oz' in p||'d' in p)a++;if(s2.includes(p.shape)||'rot' in p)b++}});
+ return a>b?'3d':b>a?'2d':S.mode;
+}
+function normParts(raw,mode){
+ const is2=mode==='2d',cc=document.createElement('canvas').getContext('2d'),num=(v,d)=>typeof v==='number'&&isFinite(v)?v:d;
+ const col=c=>{if(typeof c==='string'&&/^#[0-9a-f]{6}$/i.test(c))return c;try{cc.fillStyle='#888888';cc.fillStyle=String(c);if(/^#[0-9a-f]{6}$/i.test(cc.fillStyle))return cc.fillStyle}catch(e){}return '#888888'};
+ const src=raw.filter(p=>p&&typeof p==='object'),used=new Set(),map={};
+ const fin=src.map((p,i)=>{let n=String(p.name==null?'part'+(i+1):p.name).trim()||'part'+(i+1),b=n,k=2;while(used.has(n))n=b+k++;used.add(n);if(p.name!=null&&!(p.name in map))map[p.name]=n;return n});
+ const shapes=is2?['rect','circle','triangle','path']:['box','sphere','cylinder','cone'];
+ const out=src.map((p,i)=>{
+  const q={name:fin[i],shape:shapes.includes(p.shape)?p.shape:shapes[0],x:num(p.x,0),y:num(p.y,0)};
+  if(is2){Object.assign(q,{rot:num(p.rot,0),w:num(p.w,50),h:num(p.h,50),ox:num(p.ox,0),oy:num(p.oy,0)});
+   if(q.shape==='path'){
+    if(Array.isArray(p.pts)&&p.pts.length>2){q.pts=p.pts.map(a=>[num(a[0],0),num(a[1],0)]);
+     if(!q.w){const xs=q.pts.map(a=>a[0]),ys=q.pts.map(a=>a[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),bw=Math.max(x1-x0,4),bh=Math.max(y1-y0,4),mx=(x0+x1)/2,my=(y0+y1)/2;q.pts=q.pts.map(a=>[(a[0]-mx)/bw,(a[1]-my)/bh]);q.w=bw;q.h=bh;q.ox=Math.round(mx);q.oy=Math.round(my)}}
+    else q.shape='rect'}
+   if(typeof p.z==='number')q.z=p.z;if(p.back)q.back=1}
+  else Object.assign(q,{z:num(p.z,0),rx:num(p.rx,0),ry:num(p.ry,0),rz:num(p.rz,0),w:num(p.w,.6),h:num(p.h,.6),d:num(p.d,.6),ox:num(p.ox,0),oy:num(p.oy,0),oz:num(p.oz,0)});
+  q.color=col(p.color);q.parent=p.parent!=null&&map[p.parent]!==undefined&&map[p.parent]!==q.name?map[p.parent]:null;
+  return q;
+ });
+ out.forEach(p=>{let q=p,c=0;while(q&&q.parent&&c<=out.length){q=out.find(r=>r.name===q.parent);c++}if(c>out.length)p.parent=null});
+ if(is2)layerize(out);
+ return out;
+}
+let tt;
+function toast(msg,undo){
+ const t=$('#toast');t.innerHTML='';const s=document.createElement('span');s.textContent=msg;t.append(s);
+ if(undo){const b=document.createElement('button');b.textContent='Undo';b.onclick=()=>{undo();t.hidden=true};t.append(b)}
+ t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,9000);
+}
+function importText(text){
+ text=String(text||'').trim();if(!text)return 'Nothing to import yet. Paste code or choose a file.';
+ let data=null;try{data=JSON.parse(text)}catch(e){try{data=extractModel(text)}catch(e2){data=null}}
+ const raw=Array.isArray(data)?data:data&&Array.isArray(data.parts)?data.parts:null;
+ if(!raw||!raw.length)return 'Could not find a model in that text. Use code exported from Model Studio.';
+ const mode=detectMode(raw,text),parts=normParts(raw,mode);
+ if(!parts.length)return 'That model has no parts.';
+ const u={target:mode,prevMode:S.mode,cat:S.cat,m:JSON.stringify(S.m[mode]),sel:S.sel[mode]};
+ S.m[mode]={parts};S.sel[mode]=null;
+ const c=/Model Studio export \((?:2D|3D), (\w+)\)/.exec(text);if(c&&CATS[c[1]]){S.cat=c[1];$('#cat').value=c[1];setNames()}
+ changed();setMode(mode);
+ toast('Opened a '+mode.toUpperCase()+' model ('+parts.length+' parts) in the '+mode.toUpperCase()+' studio.',()=>{S.m[u.target]=JSON.parse(u.m);S.sel[u.target]=u.sel;S.cat=u.cat;$('#cat').value=u.cat;setNames();changed();setMode(u.prevMode)});
+ return '';
+}
+$('#im').onclick=()=>{$('#ie').textContent='';$('#dlg2').showModal()};
+$('#ic').onclick=()=>$('#dlg2').close();
+$('#ig').onclick=()=>{const m=importText($('#itx').value);$('#ie').textContent=m;if(!m){$('#itx').value='';$('#dlg2').close()}};
+const readFile=f=>f.text().then(t=>{const m=importText(t);if($('#dlg2').open){$('#ie').textContent=m;if(!m)$('#dlg2').close()}else if(m)toast(m)});
+$('#if').onchange=e=>{const f=e.target.files[0];if(f)readFile(f);e.target.value=''};
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)readFile(f)});
+$('#pt').onclick=()=>{const c=$('main').classList.toggle('closed');$('#pt').textContent=c?'Show panel':'Hide panel'};
+/* ---- Copy, paste, shortcuts ---- */
+let clip=null;
+function copySel(quiet){
+ const p=sel();if(!p){toast('Select a part first.');return false}
+ const m=cur(),ns=[p.name,...desc(m,p.name)];
+ clip={mode:S.mode,root:p.name,parts:JSON.parse(JSON.stringify(m.parts.filter(q=>ns.includes(q.name))))};
+ if(!quiet)toast('Copied '+ns.length+(ns.length>1?' parts (with children)':' part')+'. Paste with Ctrl+V.');
+ return true;
+}
+function pasteClip(){
+ if(!clip||clip.mode!==S.mode){toast('Copy a part in the '+S.mode.toUpperCase()+' studio first.');return}
+ const m=cur(),map={},is2=S.mode==='2d',zb=is2?Math.max(-1,...m.parts.map(q=>q.z))+1:0,zmin=is2?Math.min(...clip.parts.map(q=>q.z)):0,taken=new Set(m.parts.map(q=>q.name));
+ clip.parts.forEach(q=>{const b=q.name.replace(/ copy( \d+)?$/,'')+' copy';let n=b,i=2;while(taken.has(n))n=b+' '+i++;taken.add(n);map[q.name]=n});
+ const rp=clip.parts.find(q=>q.name===clip.root).parent;
+ const add=clip.parts.map(q=>{
+  const c=JSON.parse(JSON.stringify(q));c.name=map[q.name];
+  if(q.name===clip.root){c.parent=rp&&m.parts.some(r=>r.name===rp)?rp:null;c.x+=is2?24:.3}else c.parent=map[q.parent];
+  if(is2)c.z=zb+q.z-zmin;
+  return c;
+ });
+ m.parts.push(...add);S.sel[S.mode]=map[clip.root];changed();renderList();renderProps();
+}
+function setTool(t){tool=t;document.querySelectorAll('#tools [data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t===t))}
+$('#bcopy').onclick=()=>copySel();$('#bpaste').onclick=pasteClip;$('#bdup').onclick=()=>{if(copySel(true))pasteClip()};
+addEventListener('keydown',e=>{
+ if(e.target.closest&&e.target.closest('input,textarea,select,dialog'))return;
+ const mod=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();
+ if(mod&&k==='c'){copySel();e.preventDefault()}
+ else if(mod&&k==='v'){pasteClip();e.preventDefault()}
+ else if(mod&&k==='d'){if(copySel(true))pasteClip();e.preventDefault()}
+ else if(k==='delete'||k==='backspace'){const p=sel();if(p){del(p.name);e.preventDefault()}}
+ else if(k==='escape'){S.sel[S.mode]=null;renderList();renderProps()}
+ else if(!mod&&S.mode==='3d'&&(k==='w'||k==='e'||k==='r'))setTool({w:'move',e:'rotate',r:'scale'}[k]);
+});
+$('#tools').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.t)setTool(b.dataset.t);
+ if(b.dataset.a){axis=b.dataset.a;document.querySelectorAll('#tools [data-a]').forEach(x=>x.classList.toggle('on',x.dataset.a===axis))}
+ if(b.dataset.o==='space'){local=!local;b.textContent=local?'Local':'World'}
+ if(b.dataset.o==='snap'){snap=!snap;b.textContent=snap?'Snap on':'Snap off';b.classList.toggle('on',snap);if(tc){tc.setTranslationSnap(snap?.1:null);tc.setRotationSnap(snap?15*D:null);tc.setScaleSnap(snap?.1:null)}}
+};
+setNames();init3();setMode(S.mode);
+</script>
+</body></html>

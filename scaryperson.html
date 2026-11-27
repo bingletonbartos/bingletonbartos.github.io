@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Video call</title>
+<style>
+  :root {
+    --bg: #1c1c1e;
+    --bar: #232326;
+    --line: #38383c;
+    --text: #f2f2f3;
+    --muted: #a0a0a6;
+    --green: #2fbf71;
+    --bar-h: 52px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .app { height: 100%; display: flex; flex-direction: column; }
+
+  .topbar { height: var(--bar-h); flex: none; display: flex; align-items: center;
+    justify-content: space-between; gap: 12px; padding: 0 16px;
+    background: var(--bar); border-bottom: 1px solid var(--line); font-size: 14px; }
+  .secure { display: flex; align-items: center; gap: 6px; color: var(--green); font-weight: 600; white-space: nowrap; }
+  .title { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta { color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+
+  .stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .tile { width: min(100%, calc((100dvh - var(--bar-h) - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 16 / 9));
+    aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: #000; box-shadow: 0 8px 32px rgba(0,0,0,.45); }
+
+  @media (max-width: 600px) {
+    .stage { padding: 8px; }
+    .secure span { display: none; }
+    .tile { width: min(100%, calc((100dvh - var(--bar-h) - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 9 / 16));
+      aspect-ratio: 9 / 16; border-radius: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="secure">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 8.2-8 9-4.8-.8-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span>Secure</span>
+    </div>
+    <div class="title">Video call</div>
+    <div class="meta"><span class="dot"></span>2 participants</div>
+  </header>
+
+  <main class="stage">
+    <div class="tile">
+      <tavus-embed
+        deployment-id="6b545252-972c-4cb4-a7a9-96d04bfc3469"
+        layout="full-screen"
+        override-config='{"customization":{"style":{"mode":"dark"}}}'
+      ></tavus-embed>
+    </div>
+  </main>
+</div>
+<script src="https://unpkg.com/@tavus/embed@latest"></script>
+</body>
+</html>
